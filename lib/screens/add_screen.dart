@@ -20,6 +20,7 @@ class _AddScreenState extends State<AddScreen> {
   String _selectedEventType = 'custom';
   String _selectedColorTheme = 'gradient1';
   String _selectedIcon = 'event';
+  bool _isMemorial = false; // 新增：是否为纪念日模式
 
   final List<Map<String, dynamic>> _eventTypes = [
     {'value': 'custom', 'label': '自定义', 'icon': Icons.event},
@@ -37,11 +38,62 @@ class _AddScreenState extends State<AddScreen> {
     super.dispose();
   }
 
+  Widget _buildModeSelector() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _isMemorial ? '纪念日模式' : '倒计时模式',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _isMemorial 
+                        ? '记录已经发生的重要时刻，计算已经过去的时间'
+                        : '设置未来的目标日期，倒数计时到达那一刻',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Switch(
+              value: _isMemorial,
+              onChanged: (value) {
+                setState(() {
+                  _isMemorial = value;
+                  // 根据模式调整默认日期
+                  if (_isMemorial) {
+                    // 纪念日模式：默认设置为过去的日期
+                    _selectedDate = DateTime.now().subtract(const Duration(days: 365));
+                  } else {
+                    // 倒计时模式：默认设置为未来的日期
+                    _selectedDate = DateTime.now().add(const Duration(days: 30));
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('添加倒计时'),
+        title: Text(_isMemorial ? '添加纪念日' : '添加倒计时'),
         actions: [
           TextButton(
             onPressed: _saveCountdown,
@@ -54,6 +106,8 @@ class _AddScreenState extends State<AddScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildModeSelector(),
+            const SizedBox(height: 20),
             _buildTitleField(),
             const SizedBox(height: 20),
             _buildDescriptionField(),
@@ -68,7 +122,7 @@ class _AddScreenState extends State<AddScreen> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: _saveCountdown,
-                child: const Text('创建倒计时'),
+                child: Text(_isMemorial ? '创建纪念日' : '创建倒计时'),
               ),
             ),
           ],
@@ -88,8 +142,8 @@ class _AddScreenState extends State<AddScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: _titleController,
-          decoration: const InputDecoration(
-            hintText: '输入倒计时标题',
+          decoration: InputDecoration(
+            hintText: _isMemorial ? '输入纪念日标题' : '输入倒计时标题',
           ),
         ),
       ],
@@ -121,7 +175,7 @@ class _AddScreenState extends State<AddScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '目标日期',
+          _isMemorial ? '纪念日期' : '目标日期',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -257,11 +311,23 @@ class _AddScreenState extends State<AddScreen> {
   }
 
   Future<void> _selectDate() async {
+    DateTime firstDate, lastDate;
+    
+    if (_isMemorial) {
+      // 纪念日模式：可以选择过去的日期，最早100年前，最晚到今天
+      firstDate = DateTime.now().subtract(const Duration(days: 365 * 100));
+      lastDate = DateTime.now();
+    } else {
+      // 倒计时模式：只能选择未来的日期，从今天开始，最多10年后
+      firstDate = DateTime.now();
+      lastDate = DateTime.now().add(const Duration(days: 365 * 10));
+    }
+    
     final date = await showChineseDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+      firstDate: firstDate,
+      lastDate: lastDate,
       showTime: true,
     );
     
@@ -310,6 +376,7 @@ class _AddScreenState extends State<AddScreen> {
         colorTheme: _selectedColorTheme,
         iconName: _selectedIcon,
         createdAt: DateTime.now(),
+        isMemorial: _isMemorial,
       );
 
       await context.read<CountdownProvider>().addCountdown(countdown);
@@ -321,11 +388,11 @@ class _AddScreenState extends State<AddScreen> {
         // 显示成功消息
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('倒计时创建成功！'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(_isMemorial ? '纪念日创建成功！' : '倒计时创建成功！'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -340,7 +407,12 @@ class _AddScreenState extends State<AddScreen> {
         _titleController.clear();
         _descriptionController.clear();
         setState(() {
-          _selectedDate = DateTime.now().add(const Duration(days: 30));
+          // 根据当前模式设置默认日期
+          if (_isMemorial) {
+            _selectedDate = DateTime.now().subtract(const Duration(days: 365));
+          } else {
+            _selectedDate = DateTime.now().add(const Duration(days: 30));
+          }
           _selectedEventType = 'custom';
           _selectedColorTheme = 'gradient1';
           _selectedIcon = 'event';

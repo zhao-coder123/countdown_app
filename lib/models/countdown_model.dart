@@ -13,6 +13,7 @@ class CountdownModel {
   final bool isArchived;
   final String? imageUrl;
   final Map<String, dynamic>? customSettings;
+  final bool isMemorial; // 新增：是否为纪念日模式
 
   CountdownModel({
     this.id,
@@ -29,6 +30,7 @@ class CountdownModel {
     this.isArchived = false,
     this.imageUrl,
     this.customSettings,
+    this.isMemorial = false, // 默认为倒计时模式
   });
 
   CountdownModel copyWith({
@@ -46,6 +48,7 @@ class CountdownModel {
     bool? isArchived,
     String? imageUrl,
     Map<String, dynamic>? customSettings,
+    bool? isMemorial,
   }) {
     return CountdownModel(
       id: id ?? this.id,
@@ -62,6 +65,7 @@ class CountdownModel {
       isArchived: isArchived ?? this.isArchived,
       imageUrl: imageUrl ?? this.imageUrl,
       customSettings: customSettings ?? this.customSettings,
+      isMemorial: isMemorial ?? this.isMemorial,
     );
   }
 
@@ -82,6 +86,7 @@ class CountdownModel {
       'imageUrl': imageUrl,
       'customSettings': customSettings != null ? 
           customSettings.toString() : null,
+      'isMemorial': isMemorial ? 1 : 0,
     };
   }
 
@@ -102,18 +107,31 @@ class CountdownModel {
       hasNotification: map['hasNotification'] == 1,
       isArchived: map['isArchived'] == 1,
       imageUrl: map['imageUrl'],
+      isMemorial: map['isMemorial'] == 1,
     );
   }
 
   Duration get timeRemaining {
     final now = DateTime.now();
-    if (targetDate.isBefore(now)) {
-      return Duration.zero;
+    if (isMemorial) {
+      // 纪念日模式：计算已经过去的时间
+      return now.difference(targetDate);
+    } else {
+      // 倒计时模式：计算剩余时间
+      if (targetDate.isBefore(now)) {
+        return Duration.zero;
+      }
+      return targetDate.difference(now);
     }
-    return targetDate.difference(now);
   }
 
-  bool get isExpired => targetDate.isBefore(DateTime.now());
+  bool get isExpired {
+    if (isMemorial) {
+      // 纪念日永远不会过期
+      return false;
+    }
+    return targetDate.isBefore(DateTime.now());
+  }
 
   // 兼容旧API的getter
   int get daysLeft {
@@ -121,7 +139,22 @@ class CountdownModel {
     final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
     final today = DateTime(now.year, now.month, now.day);
     
-    return target.difference(today).inDays;
+    if (isMemorial) {
+      // 纪念日：返回已经过去的天数
+      return today.difference(target).inDays;
+    } else {
+      // 倒计时：返回剩余天数
+      return target.difference(today).inDays;
+    }
+  }
+
+  // 新增：获取已经过去的天数（专门用于纪念日）
+  int get daysPassed {
+    final now = DateTime.now();
+    final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
+    final today = DateTime(now.year, now.month, now.day);
+    
+    return today.difference(target).inDays;
   }
 
   double get progressPercentage {
@@ -133,19 +166,35 @@ class CountdownModel {
   }
 
   String get formattedTimeRemaining {
-    if (isExpired) return 'Event has passed';
+    if (!isMemorial && isExpired) return '活动已结束';
     
     final duration = timeRemaining;
     final days = duration.inDays;
     final hours = duration.inHours % 24;
     final minutes = duration.inMinutes % 60;
     
-    if (days > 0) {
-      return '$days天 $hours小时 $minutes分钟';
-    } else if (hours > 0) {
-      return '$hours小时 $minutes分钟';
+    if (isMemorial) {
+      // 纪念日格式
+      if (days > 365) {
+        final years = days ~/ 365;
+        final remainingDays = days % 365;
+        return '$years年 $remainingDays天';
+      } else if (days > 0) {
+        return '$days天 $hours小时';
+      } else if (hours > 0) {
+        return '$hours小时 $minutes分钟';
+      } else {
+        return '$minutes分钟';
+      }
     } else {
-      return '$minutes分钟';
+      // 倒计时格式
+      if (days > 0) {
+        return '$days天 $hours小时 $minutes分钟';
+      } else if (hours > 0) {
+        return '$hours小时 $minutes分钟';
+      } else {
+        return '$minutes分钟';
+      }
     }
   }
 }

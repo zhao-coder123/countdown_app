@@ -19,9 +19,17 @@ class DatabaseService {
     String path = join(await getDatabasesPath(), 'countdown_app.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // 增加版本号以支持新字段
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // 添加isMemorial字段
+      await db.execute('ALTER TABLE countdowns ADD COLUMN isMemorial INTEGER DEFAULT 0');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -40,7 +48,8 @@ class DatabaseService {
         hasNotification INTEGER NOT NULL,
         isArchived INTEGER NOT NULL,
         imageUrl TEXT,
-        customSettings TEXT
+        customSettings TEXT,
+        isMemorial INTEGER DEFAULT 0
       )
     ''');
 
@@ -52,6 +61,7 @@ class DatabaseService {
     final now = DateTime.now();
     
     final samples = [
+      // 倒计时事件
       CountdownModel(
         title: '新年快乐',
         description: '2025年新年倒计时',
@@ -60,6 +70,7 @@ class DatabaseService {
         colorTheme: 'gradient1',
         iconName: 'celebration',
         createdAt: now,
+        isMemorial: false,
       ),
       CountdownModel(
         title: '春节',
@@ -69,6 +80,7 @@ class DatabaseService {
         colorTheme: 'gradient2',
         iconName: 'festival',
         createdAt: now,
+        isMemorial: false,
       ),
       CountdownModel(
         title: '我的生日',
@@ -78,6 +90,28 @@ class DatabaseService {
         colorTheme: 'gradient3',
         iconName: 'cake',
         createdAt: now,
+        isMemorial: false,
+      ),
+      // 纪念日事件
+      CountdownModel(
+        title: '恋爱纪念日',
+        description: '我们在一起的美好时光',
+        targetDate: DateTime(2022, 3, 14), // 过去的日期
+        eventType: 'anniversary',
+        colorTheme: 'gradient4',
+        iconName: 'favorite',
+        createdAt: now,
+        isMemorial: true,
+      ),
+      CountdownModel(
+        title: '工作开始',
+        description: '第一天上班的日子',
+        targetDate: DateTime(2023, 7, 1), // 过去的日期
+        eventType: 'custom',
+        colorTheme: 'gradient5',
+        iconName: 'work',
+        createdAt: now,
+        isMemorial: true,
       ),
     ];
 
