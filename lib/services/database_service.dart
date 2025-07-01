@@ -201,6 +201,11 @@ class DatabaseService {
     });
   }
 
+  Future<int> clearAllData() async {
+    final db = await database;
+    return await db.delete('countdowns');
+  }
+
   Future<void> close() async {
     final db = await database;
     db.close();

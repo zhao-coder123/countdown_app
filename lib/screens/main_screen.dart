@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/countdown_provider.dart';
 import 'home_screen.dart';
 import 'add_screen.dart';
 import 'discover_screen.dart';
@@ -16,31 +17,32 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
-  late PageController _pageController;
+  final PageController _pageController = PageController();
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
 
-  late final List<Widget> _screens;
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const AddScreen(),
+    const DiscoverScreen(),
+    const SettingsScreen(),
+  ];
 
   final List<BottomNavigationBarItem> _navItems = [
     const BottomNavigationBarItem(
-      icon: Icon(Icons.home_outlined),
-      activeIcon: Icon(Icons.home),
+      icon: Icon(Icons.home_rounded),
       label: '首页',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.add_circle_outline),
-      activeIcon: Icon(Icons.add_circle),
+      icon: Icon(Icons.add_circle_outline_rounded),
       label: '添加',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.explore_outlined),
-      activeIcon: Icon(Icons.explore),
+      icon: Icon(Icons.explore_rounded),
       label: '发现',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.settings_outlined),
-      activeIcon: Icon(Icons.settings),
+      icon: Icon(Icons.settings_rounded),
       label: '设置',
     ),
   ];
@@ -48,7 +50,6 @@ class _MainScreenState extends State<MainScreen>
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _fabAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -61,14 +62,6 @@ class _MainScreenState extends State<MainScreen>
       curve: Curves.elasticOut,
     ));
     _fabAnimationController.forward();
-    
-    // 初始化页面列表，传递切换方法给 AddScreen
-    _screens = [
-      const HomeScreen(),
-      AddScreen(onCountdownCreated: () => _onTabTapped(0)),
-      const DiscoverScreen(),
-      const SettingsScreen(),
-    ];
   }
 
   @override
@@ -78,21 +71,6 @@ class _MainScreenState extends State<MainScreen>
     super.dispose();
   }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-
-    // 重新播放FAB动画
-    _fabAnimationController.reset();
-    _fabAnimationController.forward();
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -100,12 +78,12 @@ class _MainScreenState extends State<MainScreen>
     return Scaffold(
       body: PageView(
         controller: _pageController,
-        children: _screens,
         onPageChanged: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
+        children: _screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -123,8 +101,16 @@ class _MainScreenState extends State<MainScreen>
           ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
-            onTap: _onTabTapped,
-            items: _navItems,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
             type: BottomNavigationBarType.fixed,
             elevation: 0,
             backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
@@ -138,6 +124,7 @@ class _MainScreenState extends State<MainScreen>
               fontWeight: FontWeight.w400,
               fontSize: 11,
             ),
+            items: _navItems,
           ),
         ),
       ),
@@ -147,7 +134,14 @@ class _MainScreenState extends State<MainScreen>
               scale: _fabAnimation,
               child: FloatingActionButton.extended(
                 onPressed: () {
-                  _onTabTapped(1); // 跳转到添加页面
+                  setState(() {
+                    _currentIndex = 1;
+                  });
+                  _pageController.animateToPage(
+                    1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
                 },
                 backgroundColor: themeProvider.lightColorScheme.primary,
                 foregroundColor: themeProvider.lightColorScheme.onPrimary,

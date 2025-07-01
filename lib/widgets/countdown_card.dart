@@ -268,49 +268,12 @@ class _CountdownCardState extends State<CountdownCard>
       );
     }
 
-    final days = timeRemaining.inDays;
-    final hours = timeRemaining.inHours % 24;
-    final minutes = timeRemaining.inMinutes % 60;
-
-    return Row(
-      children: [
-        if (days > 0) ...[
-          _buildTimeUnit(days.toString(), '天'),
-          const SizedBox(width: 8),
-        ],
-        _buildTimeUnit(hours.toString().padLeft(2, '0'), '时'),
-        const SizedBox(width: 8),
-        _buildTimeUnit(minutes.toString().padLeft(2, '0'), '分'),
-      ],
-    );
-  }
-
-  Widget _buildTimeUnit(String value, String unit) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            unit,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.white.withOpacity(0.8),
-            ),
-          ),
-        ],
+    return Text(
+      _getFormattedTimeRemaining(timeRemaining),
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
       ),
     );
   }
@@ -369,7 +332,7 @@ class _CountdownCardState extends State<CountdownCard>
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color: Colors.white.withOpacity(0.8),
+                color: _getProgressColor(),
               ),
             ),
           ),
@@ -413,6 +376,44 @@ class _CountdownCardState extends State<CountdownCard>
         return '旅行';
       default:
         return '事件';
+    }
+  }
+
+  String _getFormattedTimeRemaining(Duration timeRemaining) {
+    if (timeRemaining.isNegative) return '已过期';
+    
+    final days = timeRemaining.inDays;
+    final hours = timeRemaining.inHours % 24;
+    final minutes = timeRemaining.inMinutes % 60;
+    final seconds = timeRemaining.inSeconds % 60;
+
+    if (days > 365) {
+      final years = (days / 365).floor();
+      final remainingDays = days % 365;
+      return '$years年 $remainingDays天';
+    } else if (days > 30) {
+      final months = (days / 30).floor();
+      final remainingDays = days % 30;
+      return '$months月 $remainingDays天';
+    } else if (days > 0) {
+      return '$days天 $hours小时';
+    } else if (hours > 0) {
+      return '$hours小时 $minutes分钟';
+    } else if (minutes > 0) {
+      return '$minutes分钟 $seconds秒';
+    } else {
+      return '$seconds秒';
+    }
+  }
+
+  Color _getProgressColor() {
+    final progress = widget.countdown.progressPercentage;
+    if (progress < 0.3) {
+      return Colors.green.withOpacity(0.8);
+    } else if (progress < 0.7) {
+      return Colors.orange.withOpacity(0.8);
+    } else {
+      return Colors.red.withOpacity(0.8);
     }
   }
 } 

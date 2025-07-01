@@ -24,13 +24,11 @@ class _DetailScreenState extends State<DetailScreen>
   late Animation<double> _pulseAnimation;
   late Animation<Offset> _slideAnimation;
   Timer? _updateTimer;
-  late CountdownModel _currentCountdown;
+
 
   @override
   void initState() {
     super.initState();
-    
-    _currentCountdown = widget.countdown;
     
     _progressController = AnimationController(
       duration: const Duration(seconds: 2),

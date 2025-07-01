@@ -1,0 +1,128 @@
+{
+  "@@locale": "en",
+  "appTitle": "RingTime",
+  "appSubtitle": "Beautiful Countdown Timer",
+  
+  "homeTitle": "Home",
+  "addTitle": "Add Countdown",
+  "discoverTitle": "Discover",
+  "settingsTitle": "Settings",
+  
+  "greeting_morning": "Good Morning!",
+  "greeting_afternoon": "Good Afternoon!",
+  "greeting_evening": "Good Evening!",
+  "greeting_subtitle": "Let's look forward to wonderful moments together",
+  
+  "total": "Total",
+  "upcoming": "Upcoming",
+  "completed": "Completed",
+  "expired": "Expired",
+  
+  "upcoming_events": "Upcoming Events",
+  "all_countdowns": "All Countdowns",
+  "no_countdowns": "No countdowns yet",
+  "no_countdowns_subtitle": "Tap the + button below to add your first countdown",
+  
+  "loading": "Loading...",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "update": "Update",
+  
+  "title": "Title",
+  "description": "Description",
+  "target_date": "Target Date",
+  "event_type": "Event Type",
+  "color_theme": "Color Theme",
+  
+  "title_hint": "Enter countdown title",
+  "description_hint": "Enter description",
+  "description_optional": "Description (optional)",
+  
+  "create_countdown": "Create Countdown",
+  "edit_countdown": "Edit Countdown",
+  "delete_countdown": "Delete Countdown",
+  "delete_confirmation": "Are you sure you want to delete \"{title}\"?",
+  
+  "event_custom": "Custom",
+  "event_birthday": "Birthday",
+  "event_anniversary": "Anniversary",
+  "event_holiday": "Holiday",
+  "event_work": "Work",
+  "event_travel": "Travel",
+  
+  "days": "Days",
+  "hours": "Hours",
+  "minutes": "Minutes",
+  "seconds": "Seconds",
+  
+  "day": "Day",
+  "hour": "Hour",
+  "minute": "Minute",
+  "second": "Second",
+  
+  "progress": "Progress",
+  "event_expired": "Expired",
+  
+  "success_created": "Countdown created successfully!",
+  "success_updated": "Countdown updated successfully!",
+  "success_deleted": "Countdown deleted successfully!",
+  
+  "error_title_required": "Please enter a title",
+  "error_create_failed": "Create failed: {error}",
+  "error_update_failed": "Update failed: {error}",
+  "error_delete_failed": "Delete failed: {error}",
+  
+  "settings_appearance": "Appearance Settings",
+  "settings_function": "Function Settings",
+  "settings_data": "Data Management",
+  "settings_about": "About App",
+  
+  "dark_mode": "Dark Mode",
+  "dark_mode_subtitle": "Switch between light/dark theme",
+  "color_theme_title": "Theme Color",
+  "color_theme_subtitle": "Choose your favorite color theme",
+  "language": "Language",
+  "language_subtitle": "Choose your preferred language",
+  
+  "notifications": "Push Notifications",
+  "notifications_subtitle": "Allow app to send reminder notifications",
+  "sound_effects": "Sound Effects",
+  "sound_effects_subtitle": "Play sound when countdown completes",
+  "haptic_feedback": "Haptic Feedback",
+  "haptic_feedback_subtitle": "Provide tactile feedback during operations",
+  
+  "export_data": "Export Data",
+  "export_data_subtitle": "Backup your countdown data",
+  "clear_data": "Clear Data",
+  "clear_data_subtitle": "Delete all countdown data",
+  
+  "version_info": "Version Info",
+  "developer": "Developer",
+  "rate_app": "Rate App",
+  "share_app": "Share App",
+  
+  "my_countdowns": "My Countdowns",
+  "my_countdowns_subtitle": "Manage your time and goals",
+  
+  "coming_soon": "{feature} feature coming soon",
+  "feature_not_implemented": "This feature is not implemented yet",
+  
+  "select_color_theme": "Select Color Theme",
+  "select_language": "Select Language",
+  
+  "chinese_simplified": "简体中文",
+  "english": "English",
+  
+  "export_success": "Data exported successfully",
+  "export_failed": "Export failed",
+  "clear_data_confirmation": "Are you sure you want to delete all countdown data? This action cannot be undone.",
+  "clear_data_success": "All data cleared successfully",
+  "clear_data_failed": "Clear data failed",
+  
+  "saving": "Saving...",
+  "updating": "Updating...",
+  "deleting": "Deleting..."
+} 

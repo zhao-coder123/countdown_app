@@ -1,0 +1,128 @@
+{
+  "@@locale": "zh",
+  "appTitle": "圆时间",
+  "appSubtitle": "精美的倒计时应用",
+  
+  "homeTitle": "首页",
+  "addTitle": "添加倒计时",
+  "discoverTitle": "发现",
+  "settingsTitle": "设置",
+  
+  "greeting_morning": "早上好！",
+  "greeting_afternoon": "下午好！",
+  "greeting_evening": "晚上好！",
+  "greeting_subtitle": "让我们一起期待美好的时刻到来",
+  
+  "total": "总计",
+  "upcoming": "即将到来",
+  "completed": "已完成",
+  "expired": "已过期",
+  
+  "upcoming_events": "即将到来",
+  "all_countdowns": "所有倒计时",
+  "no_countdowns": "还没有倒计时",
+  "no_countdowns_subtitle": "点击下方的 + 按钮来添加你的第一个倒计时",
+  
+  "loading": "加载中...",
+  "save": "保存",
+  "cancel": "取消",
+  "delete": "删除",
+  "edit": "编辑",
+  "create": "创建",
+  "update": "更新",
+  
+  "title": "标题",
+  "description": "描述",
+  "target_date": "目标日期",
+  "event_type": "事件类型",
+  "color_theme": "颜色主题",
+  
+  "title_hint": "输入倒计时标题",
+  "description_hint": "输入描述信息",
+  "description_optional": "描述（可选）",
+  
+  "create_countdown": "创建倒计时",
+  "edit_countdown": "编辑倒计时",
+  "delete_countdown": "删除倒计时",
+  "delete_confirmation": "确定要删除「{title}」吗？",
+  
+  "event_custom": "自定义",
+  "event_birthday": "生日",
+  "event_anniversary": "纪念日",
+  "event_holiday": "节日",
+  "event_work": "工作",
+  "event_travel": "旅行",
+  
+  "days": "天",
+  "hours": "小时",
+  "minutes": "分钟",
+  "seconds": "秒",
+  
+  "day": "天",
+  "hour": "时",
+  "minute": "分",
+  "second": "秒",
+  
+  "progress": "进度",
+  "event_expired": "已过期",
+  
+  "success_created": "倒计时创建成功！",
+  "success_updated": "倒计时更新成功！",
+  "success_deleted": "删除成功！",
+  
+  "error_title_required": "请输入标题",
+  "error_create_failed": "创建失败：{error}",
+  "error_update_failed": "更新失败：{error}",
+  "error_delete_failed": "删除失败：{error}",
+  
+  "settings_appearance": "外观设置",
+  "settings_function": "功能设置",
+  "settings_data": "数据管理",
+  "settings_about": "关于应用",
+  
+  "dark_mode": "深色模式",
+  "dark_mode_subtitle": "切换浅色/深色主题",
+  "color_theme_title": "主题色彩",
+  "color_theme_subtitle": "选择你喜欢的颜色主题",
+  "language": "语言",
+  "language_subtitle": "选择你的首选语言",
+  
+  "notifications": "推送通知",
+  "notifications_subtitle": "允许应用发送提醒通知",
+  "sound_effects": "提示音效",
+  "sound_effects_subtitle": "倒计时完成时播放声音",
+  "haptic_feedback": "震动反馈",
+  "haptic_feedback_subtitle": "操作时提供触觉反馈",
+  
+  "export_data": "导出数据",
+  "export_data_subtitle": "备份你的倒计时数据",
+  "clear_data": "清除数据",
+  "clear_data_subtitle": "删除所有倒计时数据",
+  
+  "version_info": "版本信息",
+  "developer": "开发者",
+  "rate_app": "评价应用",
+  "share_app": "分享应用",
+  
+  "my_countdowns": "我的倒计时",
+  "my_countdowns_subtitle": "管理你的时间与目标",
+  
+  "coming_soon": "{feature} 功能即将推出",
+  "feature_not_implemented": "此功能尚未实现",
+  
+  "select_color_theme": "选择主题色彩",
+  "select_language": "选择语言",
+  
+  "chinese_simplified": "简体中文",
+  "english": "English",
+  
+  "export_success": "数据导出成功",
+  "export_failed": "导出失败",
+  "clear_data_confirmation": "确定要删除所有倒计时数据吗？此操作无法撤销。",
+  "clear_data_success": "所有数据清除成功",
+  "clear_data_failed": "清除数据失败",
+  
+  "saving": "正在保存...",
+  "updating": "正在更新...",
+  "deleting": "正在删除..."
+} 

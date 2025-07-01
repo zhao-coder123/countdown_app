@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../providers/theme_provider.dart';
 import '../providers/countdown_provider.dart';
+import '../providers/locale_provider.dart';
+import '../services/export_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -99,6 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           [
                             _buildThemeToggle(themeProvider),
                             _buildColorThemeSelector(themeProvider),
+                            _buildLanguageSelector(),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -360,6 +363,23 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
+  Widget _buildLanguageSelector() {
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, child) {
+        return ListTile(
+          leading: Icon(
+            Icons.language,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          title: const Text('语言'),
+          subtitle: Text('当前语言：${localeProvider.getLanguageName()}'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _showLanguageDialog(localeProvider),
+        );
+      },
+    );
+  }
+
   Widget _buildNotificationSetting() {
     return SwitchListTile(
       title: const Text('推送通知'),
@@ -466,21 +486,99 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('选择主题色彩'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          children: themeProvider.availableColorSchemes.map((schemeName) {
+            return ListTile(
+              leading: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: _getColorForScheme(schemeName),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              title: Text(_getSchemeDisplayName(schemeName)),
+              trailing: themeProvider.colorSchemeName == schemeName 
+                  ? const Icon(Icons.check) 
+                  : null,
+              onTap: () {
+                themeProvider.setColorScheme(schemeName);
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog(LocaleProvider localeProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择语言'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildColorOption('蓝色主题', Colors.blue, () {
-              // TODO: 实现颜色主题切换
-              Navigator.pop(context);
-            }),
-            _buildColorOption('绿色主题', Colors.green, () {
-              Navigator.pop(context);
-            }),
-            _buildColorOption('紫色主题', Colors.purple, () {
-              Navigator.pop(context);
-            }),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: const Text('简体中文'),
+              trailing: localeProvider.isChinese ? const Icon(Icons.check) : null,
+              onTap: () {
+                localeProvider.setLocale(const Locale('zh', 'CN'));
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: const Text('English'),
+              trailing: localeProvider.isEnglish ? const Icon(Icons.check) : null,
+              onTap: () {
+                localeProvider.setLocale(const Locale('en', 'US'));
+                Navigator.pop(context);
+              },
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getColorForScheme(String schemeName) {
+    switch (schemeName) {
+      case 'purple':
+        return Colors.purple;
+      case 'blue':
+        return Colors.blue;
+      case 'teal':
+        return Colors.teal;
+      case 'orange':
+        return Colors.orange;
+      case 'pink':
+        return Colors.pink;
+      case 'green':
+        return Colors.green;
+      default:
+        return Colors.purple;
+    }
+  }
+
+  String _getSchemeDisplayName(String schemeName) {
+    switch (schemeName) {
+      case 'purple':
+        return '紫色主题';
+      case 'blue':
+        return '蓝色主题';
+      case 'teal':
+        return '青色主题';
+      case 'orange':
+        return '橙色主题';
+      case 'pink':
+        return '粉色主题';
+      case 'green':
+        return '绿色主题';
+      default:
+        return '紫色主题';
+    }
   }
 
   Widget _buildColorOption(String name, Color color, VoidCallback onTap) {
@@ -510,18 +608,129 @@ class _SettingsScreenState extends State<SettingsScreen>
             child: const Text('取消'),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: 实现数据导出
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('数据导出功能即将推出')),
-              );
+              await _exportData();
             },
             child: const Text('导出'),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _importData();
+            },
+            child: const Text('导入'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _exportData() async {
+    final exportService = ExportService();
+    
+    try {
+      // 显示加载对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在导出数据...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final filePath = await exportService.exportData();
+      
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('数据导出成功！\n文件保存在：$filePath'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('导出失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _importData() async {
+    final exportService = ExportService();
+    final countdownProvider = context.read<CountdownProvider>();
+    
+    try {
+      // 显示加载对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在导入数据...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final importedCount = await exportService.importAndSaveData();
+      
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        // 刷新数据
+        await countdownProvider.loadCountdowns();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('数据导入成功！导入了 $importedCount 个倒计时'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('导入失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showClearDataDialog(CountdownProvider provider) {
@@ -537,17 +746,68 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: 实现数据清除
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('数据清除功能即将推出')),
-              );
+              await _clearAllData(provider);
             },
             child: const Text('清除'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _clearAllData(CountdownProvider provider) async {
+    final exportService = ExportService();
+    
+    try {
+      // 显示加载对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在清除数据...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await exportService.clearAllData();
+      
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        // 刷新数据
+        await provider.loadCountdowns();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('所有数据已清除'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('清除数据失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 } 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/countdown_provider.dart';
 import '../models/countdown_model.dart';
+import '../widgets/chinese_date_picker.dart';
 
 class AddScreen extends StatefulWidget {
   final VoidCallback? onCountdownCreated;
@@ -60,6 +61,8 @@ class _AddScreenState extends State<AddScreen> {
             _buildDateSelector(),
             const SizedBox(height: 20),
             _buildEventTypeSelector(),
+            const SizedBox(height: 20),
+            _buildColorThemeSelector(),
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
@@ -134,9 +137,23 @@ class _AddScreenState extends State<AddScreen> {
               children: [
                 Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
-                Text(
-                  '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -185,12 +202,67 @@ class _AddScreenState extends State<AddScreen> {
     );
   }
 
+  Widget _buildColorThemeSelector() {
+    final List<Map<String, dynamic>> colorThemes = [
+      {'value': 'gradient1', 'label': '紫色渐变', 'colors': [Color(0xFF9400D3), Color(0xFF4A00E0)]},
+      {'value': 'gradient2', 'label': '蓝色渐变', 'colors': [Color(0xFF56CCF2), Color(0xFF2F80ED)]},
+      {'value': 'gradient3', 'label': '靛蓝渐变', 'colors': [Color(0xFF6C63FF), Color(0xFF5046E5)]},
+      {'value': 'gradient4', 'label': '红色渐变', 'colors': [Color(0xFFFF6B6B), Color(0xFFFF8E8E)]},
+      {'value': 'gradient5', 'label': '绿色渐变', 'colors': [Color(0xFF43E97B), Color(0xFF38F9D7)]},
+      {'value': 'gradient6', 'label': '粉色渐变', 'colors': [Color(0xFFF093FB), Color(0xFFF5576C)]},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '颜色主题',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: colorThemes.map((theme) {
+            final isSelected = _selectedColorTheme == theme['value'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedColorTheme = theme['value'];
+                });
+              },
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: List<Color>.from(theme['colors']),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: isSelected 
+                      ? Border.all(color: Theme.of(context).colorScheme.primary, width: 3)
+                      : null,
+                ),
+                child: isSelected 
+                    ? const Icon(Icons.check, color: Colors.white, size: 24)
+                    : null,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   Future<void> _selectDate() async {
-    final date = await showDatePicker(
+    final date = await showChineseDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+      showTime: true,
     );
     
     if (date != null) {

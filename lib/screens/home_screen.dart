@@ -6,6 +6,7 @@ import '../providers/theme_provider.dart';
 import '../widgets/countdown_card.dart';
 import '../models/countdown_model.dart';
 import 'detail_screen.dart';
+import 'edit_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +22,9 @@ class _HomeScreenState extends State<HomeScreen>
   late Animation<double> _headerAnimation;
   late Animation<double> _listAnimation;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isHeaderVisible = true;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -65,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen>
     _headerAnimationController.dispose();
     _listAnimationController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -131,10 +135,25 @@ class _HomeScreenState extends State<HomeScreen>
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: _isSearching ? 320 : 280,
       floating: false,
       pinned: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      title: _isSearching ? _buildSearchBar() : null,
+      actions: [
+        IconButton(
+          icon: Icon(_isSearching ? Icons.close : Icons.search),
+          onPressed: () {
+            setState(() {
+              _isSearching = !_isSearching;
+              if (!_isSearching) {
+                _searchController.clear();
+                context.read<CountdownProvider>().setSearchQuery('');
+              }
+            });
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: AnimatedBuilder(
           animation: _headerAnimation,
@@ -147,9 +166,16 @@ class _HomeScreenState extends State<HomeScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 60),
-                    _buildGreeting(),
-                    const SizedBox(height: 20),
-                    _buildStatisticsCards(statistics, themeProvider),
+                    if (!_isSearching) ...[
+                      _buildGreeting(),
+                      const SizedBox(height: 20),
+                      _buildStatisticsCards(statistics, themeProvider),
+                    ] else ...[
+                      const SizedBox(height: 60),
+                      _buildSearchBarExpanded(),
+                      const SizedBox(height: 20),
+                      _buildQuickFilters(),
+                    ],
                   ],
                 ),
               ),
@@ -157,6 +183,121 @@ class _HomeScreenState extends State<HomeScreen>
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return TextField(
+      controller: _searchController,
+      decoration: InputDecoration(
+        hintText: '搜索倒计时...',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(25),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        prefixIcon: const Icon(Icons.search),
+      ),
+      onChanged: (value) {
+        context.read<CountdownProvider>().setSearchQuery(value);
+      },
+    );
+  }
+
+  Widget _buildSearchBarExpanded() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: '搜索倒计时标题或描述...',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          prefixIcon: Icon(
+            Icons.search,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    context.read<CountdownProvider>().setSearchQuery('');
+                  },
+                )
+              : null,
+        ),
+        onChanged: (value) {
+          setState(() {}); // 触发重建以显示/隐藏清除按钮
+          context.read<CountdownProvider>().setSearchQuery(value);
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickFilters() {
+    final provider = context.read<CountdownProvider>();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '快速筛选',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterChip('全部', 'all', provider),
+              const SizedBox(width: 8),
+              _buildFilterChip('生日', 'birthday', provider),
+              const SizedBox(width: 8),
+              _buildFilterChip('纪念日', 'anniversary', provider),
+              const SizedBox(width: 8),
+              _buildFilterChip('节日', 'holiday', provider),
+              const SizedBox(width: 8),
+              _buildFilterChip('工作', 'work', provider),
+              const SizedBox(width: 8),
+              _buildFilterChip('旅行', 'travel', provider),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(String label, String eventType, CountdownProvider provider) {
+    final isSelected = provider.selectedEventType == eventType;
+    
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        provider.setEventTypeFilter(eventType);
+      },
+      selectedColor: Theme.of(context).colorScheme.primaryContainer,
+      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
     );
   }
 
@@ -405,9 +546,17 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _editCountdown(CountdownModel countdown) {
-    // TODO: 实现编辑功能
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('编辑功能即将推出')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditScreen(
+          countdown: countdown,
+          onCountdownUpdated: () {
+            // 编辑完成后刷新数据
+            context.read<CountdownProvider>().loadCountdowns();
+          },
+        ),
+      ),
     );
   }
 
