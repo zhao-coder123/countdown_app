@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆时间 App 图标生成器</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .icon-preview {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .icon-item {
+            text-align: center;
+        }
+        
+        .icon-item canvas {
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .instructions ol {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕐 圆时间 App 图标生成器</h1>
+        <p style="text-align: center; color: #666;">为您的"圆时间"应用生成精美的图标</p>
+        
+        <div class="icon-preview" id="iconPreview">
+            <!-- 图标将在这里生成 -->
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="download-btn" onclick="generateAllIcons()">🎨 生成所有图标</button>
+            <button class="download-btn" onclick="downloadAllIcons()">📥 下载全部图标</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 使用说明</h3>
+            <ol>
+                <li>点击"生成所有图标"按钮生成不同尺寸的图标</li>
+                <li>点击"下载全部图标"下载所有图标文件</li>
+                <li>将下载的图标文件替换到对应的Android资源目录中：
+                    <ul>
+                        <li><code>android/app/src/main/res/mipmap-mdpi/ic_launcher.png</code> (48x48)</li>
+                        <li><code>android/app/src/main/res/mipmap-hdpi/ic_launcher.png</code> (72x72)</li>
+                        <li><code>android/app/src/main/res/mipmap-xhdpi/ic_launcher.png</code> (96x96)</li>
+                        <li><code>android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png</code> (144x144)</li>
+                        <li><code>android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png</code> (192x192)</li>
+                    </ul>
+                </li>
+                <li>重新编译应用即可看到新图标</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 图标尺寸配置
+        const iconSizes = [
+            { name: 'mdpi', size: 48, label: 'MDPI (48x48)' },
+            { name: 'hdpi', size: 72, label: 'HDPI (72x72)' },
+            { name: 'xhdpi', size: 96, label: 'XHDPI (96x96)' },
+            { name: 'xxhdpi', size: 144, label: 'XXHDPI (144x144)' },
+            { name: 'xxxhdpi', size: 192, label: 'XXXHDPI (192x192)' },
+            { name: 'playstore', size: 512, label: 'Play Store (512x512)' }
+        ];
+
+        let generatedIcons = [];
+
+        function createClockIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const center = size / 2;
+            
+            // 清除画布
+            ctx.clearRect(0, 0, size, size);
+            
+            // 主背景 - 精美的渐变
+            const bgGradient = ctx.createRadialGradient(center, center, 0, center, center, center * 0.9);
+            bgGradient.addColorStop(0, '#4facfe');
+            bgGradient.addColorStop(0.5, '#667eea');
+            bgGradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = bgGradient;
+            ctx.beginPath();
+            ctx.arc(center, center, center * 0.9, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 添加微妙的内阴影效果
+            const shadowGradient = ctx.createRadialGradient(center, center, center * 0.7, center, center, center * 0.9);
+            shadowGradient.addColorStop(0, 'rgba(0,0,0,0)');
+            shadowGradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+            
+            ctx.fillStyle = shadowGradient;
+            ctx.beginPath();
+            ctx.arc(center, center, center * 0.9, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 时钟外圈
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = size * 0.004;
+            ctx.beginPath();
+            ctx.arc(center, center, center * 0.75, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // 时钟刻度 - 更加精致
+            const clockRadius = center * 0.65;
+            
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * 30 - 90) * (Math.PI / 180);
+                const isMainHour = i % 3 === 0; // 12, 3, 6, 9 点位置
+                
+                if (isMainHour) {
+                    // 主要刻度 - 更粗更明显
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.lineWidth = size * 0.008;
+                    const startRadius = clockRadius + size * 0.02;
+                    const endRadius = clockRadius - size * 0.04;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        center + startRadius * Math.cos(angle),
+                        center + startRadius * Math.sin(angle)
+                    );
+                    ctx.lineTo(
+                        center + endRadius * Math.cos(angle),
+                        center + endRadius * Math.sin(angle)
+                    );
+                    ctx.stroke();
+                } else {
+                    // 次要刻度
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.lineWidth = size * 0.003;
+                    const startRadius = clockRadius + size * 0.01;
+                    const endRadius = clockRadius - size * 0.02;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        center + startRadius * Math.cos(angle),
+                        center + startRadius * Math.sin(angle)
+                    );
+                    ctx.lineTo(
+                        center + endRadius * Math.cos(angle),
+                        center + endRadius * Math.sin(angle)
+                    );
+                    ctx.stroke();
+                }
+            }
+            
+            // 进度圆弧 - 倒计时进度指示器
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = size * 0.015;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(center, center, clockRadius + size * 0.05, -Math.PI/2, Math.PI/3, false);
+            ctx.stroke();
+            
+            // 时钟指针 - 更加优雅
+            // 时针 (指向2点位置)
+            const hourAngle = (60 - 90) * (Math.PI / 180);
+            const hourLength = clockRadius * 0.45;
+            
+            // 时针阴影
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = size * 0.015;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(center + 2, center + 2);
+            ctx.lineTo(
+                center + hourLength * Math.cos(hourAngle) + 2,
+                center + hourLength * Math.sin(hourAngle) + 2
+            );
+            ctx.stroke();
+            
+            // 时针主体
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size * 0.012;
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.lineTo(
+                center + hourLength * Math.cos(hourAngle),
+                center + hourLength * Math.sin(hourAngle)
+            );
+            ctx.stroke();
+            
+            // 分针 (指向4点位置)
+            const minuteAngle = (120 - 90) * (Math.PI / 180);
+            const minuteLength = clockRadius * 0.65;
+            
+            // 分针阴影
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = size * 0.01;
+            ctx.beginPath();
+            ctx.moveTo(center + 2, center + 2);
+            ctx.lineTo(
+                center + minuteLength * Math.cos(minuteAngle) + 2,
+                center + minuteLength * Math.sin(minuteAngle) + 2
+            );
+            ctx.stroke();
+            
+            // 分针主体
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size * 0.008;
+            ctx.beginPath();
+            ctx.moveTo(center, center);
+            ctx.lineTo(
+                center + minuteLength * Math.cos(minuteAngle),
+                center + minuteLength * Math.sin(minuteAngle)
+            );
+            ctx.stroke();
+            
+            // 中心圆点 - 添加层次感
+            // 外圈
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(center, center, size * 0.035, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 内圈
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(center, center, size * 0.025, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 精致的高光效果
+            const highlightGradient = ctx.createRadialGradient(
+                center * 0.7, center * 0.7, 0,
+                center * 0.7, center * 0.7, center * 0.5
+            );
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = highlightGradient;
+            ctx.beginPath();
+            ctx.arc(center, center, center * 0.9, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function generateAllIcons() {
+            const previewContainer = document.getElementById('iconPreview');
+            previewContainer.innerHTML = '';
+            generatedIcons = [];
+            
+            iconSizes.forEach(config => {
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = config.size;
+                canvas.height = config.size;
+                canvas.style.width = Math.min(config.size, 120) + 'px';
+                canvas.style.height = Math.min(config.size, 120) + 'px';
+                
+                createClockIcon(canvas, config.size);
+                
+                const label = document.createElement('div');
+                label.textContent = config.label;
+                label.style.fontSize = '12px';
+                label.style.color = '#666';
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.textContent = '下载';
+                downloadBtn.onclick = () => downloadIcon(canvas, config.name);
+                
+                iconItem.appendChild(canvas);
+                iconItem.appendChild(label);
+                iconItem.appendChild(downloadBtn);
+                previewContainer.appendChild(iconItem);
+                
+                // 保存到生成的图标数组
+                generatedIcons.push({
+                    canvas: canvas,
+                    name: config.name,
+                    size: config.size
+                });
+            });
+        }
+
+        function downloadIcon(canvas, name) {
+            const link = document.createElement('a');
+            link.download = `ic_launcher_${name}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        function downloadAllIcons() {
+            if (generatedIcons.length === 0) {
+                alert('请先生成图标！');
+                return;
+            }
+            
+            generatedIcons.forEach(icon => {
+                setTimeout(() => {
+                    downloadIcon(icon.canvas, icon.name);
+                }, 200 * generatedIcons.indexOf(icon));
+            });
+        }
+
+        // 页面加载时自动生成图标
+        window.onload = function() {
+            generateAllIcons();
+        };
+    </script>
+</body>
+</html> 

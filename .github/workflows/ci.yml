@@ -1,0 +1,136 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    name: 代码分析
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.4'
+          channel: 'stable'
+          
+      - name: 获取依赖
+        run: flutter pub get
+        
+      - name: 验证格式
+        run: dart format --output=none --set-exit-if-changed .
+        
+      - name: 代码分析
+        run: flutter analyze
+        
+      - name: 检查pub依赖
+        run: dart pub deps
+
+  test:
+    runs-on: ubuntu-latest
+    name: 运行测试
+    needs: analyze
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.4'
+          channel: 'stable'
+          
+      - name: 获取依赖
+        run: flutter pub get
+        
+      - name: 运行测试
+        run: flutter test --coverage
+        
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/lcov.info
+
+  build-android:
+    runs-on: ubuntu-latest
+    name: 构建Android
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
+      - name: 设置Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.4'
+          channel: 'stable'
+          
+      - name: 获取依赖
+        run: flutter pub get
+        
+      - name: 构建APK
+        run: flutter build apk --release
+        
+      - name: 上传APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-web:
+    runs-on: ubuntu-latest
+    name: 构建Web
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.4'
+          channel: 'stable'
+          
+      - name: 获取依赖
+        run: flutter pub get
+        
+      - name: 构建Web
+        run: flutter build web --release
+        
+      - name: 部署到GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: 安全扫描
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 运行安全审计
+        run: |
+          # 这里可以添加安全扫描工具
+          echo "运行安全扫描..."
+          
+      - name: 依赖安全检查
+        uses: securecodewarrior/github-action-add-sarif@v1
+        with:
+          sarif-file: 'security-scan-results.sarif' 
