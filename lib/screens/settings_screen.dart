@@ -5,6 +5,7 @@ import '../providers/theme_provider.dart';
 import '../providers/countdown_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/export_service.dart';
+import '../widgets/color_picker_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -101,6 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           [
                             _buildThemeToggle(themeProvider),
                             _buildColorThemeSelector(themeProvider),
+                            _buildFontSizeSelector(themeProvider),
                             _buildLanguageSelector(),
                           ],
                         ),
@@ -113,6 +115,19 @@ class _SettingsScreenState extends State<SettingsScreen>
                             _buildNotificationSetting(),
                             _buildSoundSetting(),
                             _buildVibrationSetting(),
+                            _buildAutoRefreshSetting(),
+                            _buildDefaultModeSetting(),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildSection(
+                          context,
+                          '隐私与安全',
+                          Icons.security,
+                          [
+                            _buildAppLockSetting(),
+                            _buildDataPrivacySetting(),
+                            _buildAnalyticsSetting(),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -123,6 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           [
                             _buildExportDataTile(),
                             _buildClearDataTile(countdownProvider),
+                            _buildBackupSetting(),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -353,13 +369,36 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _buildColorThemeSelector(ThemeProvider themeProvider) {
     return ListTile(
       leading: Icon(
-        Icons.color_lens,
+        Icons.palette,
         color: Theme.of(context).colorScheme.primary,
       ),
-      title: const Text('主题色彩'),
-      subtitle: const Text('选择你喜欢的颜色主题'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => _showColorThemeDialog(themeProvider),
+      title: const Text('颜色主题'),
+      subtitle: Text('当前主题：${themeProvider.getSchemeDisplayName(themeProvider.colorSchemeName)}'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              gradient: themeProvider.isCurrentThemeCustom 
+                ? themeProvider.getGradient(themeProvider.colorSchemeName)
+                : null,
+              color: themeProvider.isCurrentThemeCustom 
+                ? null 
+                : _getColorForScheme(themeProvider.colorSchemeName),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline,
+                width: 1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: () => _showAdvancedColorPicker(themeProvider),
     );
   }
 
@@ -381,50 +420,62 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _buildNotificationSetting() {
-    return SwitchListTile(
-      title: const Text('推送通知'),
-      subtitle: const Text('允许应用发送提醒通知'),
-      value: true,
-      onChanged: (value) {
-        HapticFeedback.lightImpact();
-        // TODO: 实现通知设置
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('推送通知'),
+          subtitle: const Text('允许应用发送提醒通知'),
+          value: themeProvider.notificationEnabled,
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            themeProvider.setNotificationEnabled(value);
+          },
+          secondary: Icon(
+            Icons.notifications,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
       },
-      secondary: Icon(
-        Icons.notifications,
-        color: Theme.of(context).colorScheme.primary,
-      ),
     );
   }
 
   Widget _buildSoundSetting() {
-    return SwitchListTile(
-      title: const Text('提示音效'),
-      subtitle: const Text('倒计时完成时播放声音'),
-      value: true,
-      onChanged: (value) {
-        HapticFeedback.lightImpact();
-        // TODO: 实现声音设置
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('提示音效'),
+          subtitle: const Text('倒计时完成时播放声音'),
+          value: themeProvider.soundEnabled,
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            themeProvider.setSoundEnabled(value);
+          },
+          secondary: Icon(
+            Icons.volume_up,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
       },
-      secondary: Icon(
-        Icons.volume_up,
-        color: Theme.of(context).colorScheme.primary,
-      ),
     );
   }
 
   Widget _buildVibrationSetting() {
-    return SwitchListTile(
-      title: const Text('震动反馈'),
-      subtitle: const Text('操作时提供触觉反馈'),
-      value: true,
-      onChanged: (value) {
-        HapticFeedback.lightImpact();
-        // TODO: 实现震动设置
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('震动反馈'),
+          subtitle: const Text('操作时提供触觉反馈'),
+          value: themeProvider.vibrationEnabled,
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            themeProvider.setVibrationEnabled(value);
+          },
+          secondary: Icon(
+            Icons.vibration,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
       },
-      secondary: Icon(
-        Icons.vibration,
-        color: Theme.of(context).colorScheme.primary,
-      ),
     );
   }
 
@@ -471,12 +522,208 @@ class _SettingsScreenState extends State<SettingsScreen>
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
         HapticFeedback.lightImpact();
-        // TODO: 实现相应功能
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$title 功能即将推出')),
+        _handleAboutTileClick(title);
+      },
+    );
+  }
+
+  Widget _buildFontSizeSelector(ThemeProvider themeProvider) {
+    return ListTile(
+      leading: Icon(
+        Icons.text_fields,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('字体大小'),
+      subtitle: Text(_getFontSizeLabel(themeProvider.fontSize)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${(themeProvider.fontSize * 100).round()}%'),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: () => _showFontSizeDialog(themeProvider),
+    );
+  }
+
+  Widget _buildAutoRefreshSetting() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return ListTile(
+          leading: Icon(
+            Icons.refresh,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          title: const Text('自动刷新间隔'),
+          subtitle: Text('每${themeProvider.autoRefreshInterval}秒刷新一次'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _showAutoRefreshDialog(themeProvider),
         );
       },
     );
+  }
+
+  Widget _buildDefaultModeSetting() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('默认为纪念日模式'),
+          subtitle: const Text('新建倒计时时默认选择纪念日模式'),
+          value: themeProvider.defaultIsMemorial,
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            themeProvider.setDefaultIsMemorial(value);
+          },
+          secondary: Icon(
+            themeProvider.defaultIsMemorial ? Icons.cake : Icons.timer,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppLockSetting() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('应用锁'),
+          subtitle: const Text('启用后需要验证才能打开应用'),
+          value: false, // TODO: 实现应用锁功能
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            // TODO: 实现应用锁设置
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('应用锁功能即将推出')),
+            );
+          },
+          secondary: Icon(
+            Icons.lock,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDataPrivacySetting() {
+    return ListTile(
+      leading: Icon(
+        Icons.privacy_tip,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('数据隐私'),
+      subtitle: const Text('查看数据使用和隐私政策'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showDataPrivacyDialog();
+      },
+    );
+  }
+
+  Widget _buildAnalyticsSetting() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return SwitchListTile(
+          title: const Text('使用情况分析'),
+          subtitle: const Text('帮助改进应用性能和体验'),
+          value: true, // TODO: 实现分析设置
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            // TODO: 实现分析设置
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(value ? '已启用使用情况分析' : '已禁用使用情况分析')),
+            );
+          },
+          secondary: Icon(
+            Icons.analytics,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBackupSetting() {
+    return ListTile(
+      leading: Icon(
+        Icons.cloud_upload,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('云端备份'),
+      subtitle: const Text('自动备份数据到云端'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '即将推出',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('云端备份功能即将推出')),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAdvancedColorPicker(ThemeProvider themeProvider) async {
+    final selectedTheme = await showColorPickerDialog(
+      context,
+      initialColorTheme: themeProvider.colorSchemeName,
+      showGradients: true,
+      showPresets: true,
+      showCustom: true,
+    );
+    
+    if (selectedTheme != null) {
+      HapticFeedback.lightImpact();
+      // 使用新的方法设置主题，支持自定义颜色
+      await themeProvider.setCurrentColorTheme(selectedTheme);
+      
+      // 显示成功消息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('主题已更换为 ${_getThemeDisplayName(selectedTheme, themeProvider)}'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  // 修改：简化主题显示名称方法
+  String _getThemeDisplayName(String themeName, ThemeProvider themeProvider) {
+    return themeProvider.getSchemeDisplayName(themeName);
   }
 
   void _showColorThemeDialog(ThemeProvider themeProvider) {
@@ -809,5 +1056,252 @@ class _SettingsScreenState extends State<SettingsScreen>
         );
       }
     }
+  }
+
+  // 处理关于页面点击事件
+  void _handleAboutTileClick(String title) {
+    switch (title) {
+      case '版本信息':
+        _showVersionInfoDialog();
+        break;
+      case '开发者':
+        _showDeveloperInfoDialog();
+        break;
+      case '评价应用':
+        _rateApp();
+        break;
+      case '分享应用':
+        _shareApp();
+        break;
+    }
+  }
+
+  // 获取字体大小标签
+  String _getFontSizeLabel(double fontSize) {
+    if (fontSize <= 0.8) return '较小';
+    if (fontSize <= 0.9) return '小';
+    if (fontSize <= 1.1) return '标准';
+    if (fontSize <= 1.2) return '大';
+    return '较大';
+  }
+
+  // 显示字体大小对话框
+  void _showFontSizeDialog(ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择字体大小'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('拖动滑块调整字体大小'),
+            const SizedBox(height: 20),
+            StatefulBuilder(
+              builder: (context, setState) {
+                double tempFontSize = themeProvider.fontSize;
+                return Column(
+                  children: [
+                    Slider(
+                      value: tempFontSize,
+                      min: 0.7,
+                      max: 1.5,
+                      divisions: 8,
+                      label: '${(tempFontSize * 100).round()}%',
+                      onChanged: (value) {
+                        setState(() {
+                          tempFontSize = value;
+                        });
+                      },
+                      onChangeEnd: (value) {
+                        themeProvider.setFontSize(value);
+                      },
+                    ),
+                    Text(
+                      '字体大小：${_getFontSizeLabel(tempFontSize)} (${(tempFontSize * 100).round()}%)',
+                      style: TextStyle(fontSize: 16 * tempFontSize),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 显示自动刷新间隔对话框
+  void _showAutoRefreshDialog(ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('自动刷新间隔'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [1, 3, 5, 10, 30].map((seconds) {
+            return ListTile(
+              leading: Icon(
+                Icons.timer,
+                color: themeProvider.autoRefreshInterval == seconds
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+              ),
+              title: Text('${seconds}秒'),
+              trailing: themeProvider.autoRefreshInterval == seconds
+                  ? const Icon(Icons.check)
+                  : null,
+              onTap: () {
+                themeProvider.setAutoRefreshInterval(seconds);
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // 显示版本信息对话框
+  void _showVersionInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('版本信息'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('应用名称：圆时间'),
+            SizedBox(height: 8),
+            Text('版本号：1.0.0'),
+            SizedBox(height: 8),
+            Text('构建号：2024.01.01'),
+            SizedBox(height: 8),
+            Text('Flutter版本：3.16.0'),
+            SizedBox(height: 8),
+            Text('更新日期：2024年1月1日'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 显示开发者信息对话框
+  void _showDeveloperInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('开发者信息'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('开发团队：Flutter 开发团队'),
+            SizedBox(height: 8),
+            Text('联系邮箱：dev@example.com'),
+            SizedBox(height: 8),
+            Text('官方网站：https://example.com'),
+            SizedBox(height: 8),
+            Text('技术支持：flutter@example.com'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 评价应用
+  void _rateApp() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('感谢您的评价！将跳转到应用商店...'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    // TODO: 实际实现应用商店跳转
+  }
+
+  // 分享应用
+  void _shareApp() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('应用分享链接已复制到剪贴板'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    // TODO: 实际实现应用分享功能
+  }
+
+  // 显示数据隐私对话框
+  void _showDataPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('数据隐私政策'),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '数据收集和使用',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('• 我们仅收集您主动创建的倒计时数据'),
+              SizedBox(height: 4),
+              Text('• 所有数据均存储在您的设备本地'),
+              SizedBox(height: 4),
+              Text('• 我们不会向第三方分享您的个人数据'),
+              SizedBox(height: 16),
+              Text(
+                '数据安全',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('• 您的数据使用AES加密保护'),
+              SizedBox(height: 4),
+              Text('• 支持本地备份和恢复'),
+              SizedBox(height: 4),
+              Text('• 您可以随时删除所有数据'),
+              SizedBox(height: 16),
+              Text(
+                '权限使用',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('• 通知权限：用于倒计时提醒'),
+              SizedBox(height: 4),
+              Text('• 存储权限：用于数据导入导出'),
+              SizedBox(height: 4),
+              Text('• 振动权限：用于触觉反馈'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('我知道了'),
+          ),
+        ],
+      ),
+    );
   }
 } 

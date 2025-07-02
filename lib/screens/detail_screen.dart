@@ -504,27 +504,18 @@ class _DetailScreenState extends State<DetailScreen>
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('编辑倒计时'),
-              onTap: () {
-                Navigator.pop(context);
-                _editCountdown();
-              },
+              title: const Text('编辑'),
+              onTap: _editCountdown,
             ),
             ListTile(
               leading: const Icon(Icons.share),
-              title: const Text('分享倒计时'),
-              onTap: () {
-                Navigator.pop(context);
-                _shareCountdown();
-              },
+              title: const Text('分享'),
+              onTap: _shareCountdown,
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('删除倒计时', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _deleteCountdown();
-              },
+              title: const Text('删除', style: TextStyle(color: Colors.red)),
+              onTap: _deleteCountdown,
             ),
             const SizedBox(height: 20),
           ],
@@ -534,6 +525,7 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   void _shareCountdown() {
+    Navigator.pop(context);
     // TODO: 实现分享功能
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('分享功能即将推出')),
@@ -541,39 +533,48 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   void _editCountdown() {
-    // TODO: 实现编辑功能
+    Navigator.pop(context);
+    // TODO: 导航到编辑页面
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('编辑功能即将推出')),
     );
   }
 
   void _deleteCountdown() {
+    Navigator.pop(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除倒计时'),
-        content: Text('确定要删除「${widget.countdown.title}」吗？'),
+        content: Text('确定要删除"${widget.countdown.title}"吗？此操作无法撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('取消'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              Navigator.pop(context);
+              
               try {
                 await context.read<CountdownProvider>().deleteCountdown(widget.countdown.id!);
                 if (mounted) {
-                  Navigator.pop(context); // 关闭对话框
-                  Navigator.pop(context); // 返回上一页
+                  Navigator.pop(context); // 返回到上一页
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('删除成功')),
+                    SnackBar(
+                      content: Text('已删除"${widget.countdown.title}"'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('删除失败')),
+                    SnackBar(
+                      content: Text('删除失败：${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }
@@ -599,23 +600,23 @@ class CountdownRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 20;
-    
+
     // 背景圆环
     final backgroundPaint = Paint()
       ..color = Colors.white.withOpacity(0.2)
-      ..strokeWidth = 8
       ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
-    
+
     canvas.drawCircle(center, radius, backgroundPaint);
-    
+
     // 进度圆环
     final progressPaint = Paint()
       ..color = Colors.white
-      ..strokeWidth = 8
       ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
-    
+
     final sweepAngle = 2 * math.pi * progress * animation.value;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -624,6 +625,21 @@ class CountdownRingPainter extends CustomPainter {
       false,
       progressPaint,
     );
+
+    // 进度点
+    if (progress > 0 && animation.value > 0) {
+      final progressAngle = -math.pi / 2 + sweepAngle;
+      final progressPoint = Offset(
+        center.dx + radius * math.cos(progressAngle),
+        center.dy + radius * math.sin(progressAngle),
+      );
+
+      final dotPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(progressPoint, 8, dotPaint);
+    }
   }
 
   @override

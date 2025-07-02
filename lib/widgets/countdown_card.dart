@@ -505,23 +505,19 @@ class _CountdownCardState extends State<CountdownCard>
     } else if (hours > 0) {
       return '已经 $hours小时 $minutes分钟';
     } else {
-      return '刚刚发生';
+      return '已经 $minutes分钟';
     }
   }
 
   Color _getProgressColor() {
     if (widget.countdown.isMemorial) {
-      // 纪念日使用渐变金色，表示珍贵的回忆
-      return Colors.amber.withOpacity(0.9);
-    }
-    
-    final progress = widget.countdown.progressPercentage;
-    if (progress < 0.3) {
-      return Colors.green.withOpacity(0.8);
-    } else if (progress < 0.7) {
-      return Colors.orange.withOpacity(0.8);
+      return Colors.green;
+    } else if (widget.countdown.isExpired) {
+      return Colors.red;
+    } else if (widget.countdown.progressPercentage > 0.8) {
+      return Colors.orange;
     } else {
-      return Colors.red.withOpacity(0.8);
+      return Colors.white;
     }
   }
 } 

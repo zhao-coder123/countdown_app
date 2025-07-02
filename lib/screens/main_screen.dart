@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/countdown_provider.dart';
 import 'home_screen.dart';
 import 'add_screen.dart';
 import 'discover_screen.dart';
@@ -20,32 +19,6 @@ class _MainScreenState extends State<MainScreen>
   final PageController _pageController = PageController();
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const AddScreen(),
-    const DiscoverScreen(),
-    const SettingsScreen(),
-  ];
-
-  final List<BottomNavigationBarItem> _navItems = [
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.home_rounded),
-      label: '首页',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.add_circle_outline_rounded),
-      label: '添加',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.explore_rounded),
-      label: '发现',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.settings_rounded),
-      label: '设置',
-    ),
-  ];
 
   @override
   void initState() {
@@ -71,19 +44,58 @@ class _MainScreenState extends State<MainScreen>
     super.dispose();
   }
 
+  void _onCountdownCreated() {
+    // 倒计时创建成功后，切换到首页
+    setState(() {
+      _currentIndex = 0;
+    });
+    _pageController.animateToPage(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _onTabChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Widget _buildScreen(int index) {
+    switch (index) {
+      case 0:
+        return const HomeScreen();
+      case 1:
+        return AddScreen(onCountdownCreated: _onCountdownCreated);
+      case 2:
+        return const DiscoverScreen();
+      case 3:
+        return const SettingsScreen();
+      default:
+        return const HomeScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     return Scaffold(
-      body: PageView(
+      body: PageView.builder(
         controller: _pageController,
         onPageChanged: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        children: _screens,
+        itemCount: 4,
+        itemBuilder: (context, index) => _buildScreen(index),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -101,16 +113,7 @@ class _MainScreenState extends State<MainScreen>
           ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            },
+            onTap: _onTabChanged,
             type: BottomNavigationBarType.fixed,
             elevation: 0,
             backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
@@ -124,7 +127,24 @@ class _MainScreenState extends State<MainScreen>
               fontWeight: FontWeight.w400,
               fontSize: 11,
             ),
-            items: _navItems,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_rounded),
+                label: '首页',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.add_circle_outline_rounded),
+                label: '添加',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.explore_rounded),
+                label: '发现',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings_rounded),
+                label: '设置',
+              ),
+            ],
           ),
         ),
       ),
@@ -133,16 +153,7 @@ class _MainScreenState extends State<MainScreen>
           : ScaleTransition(
               scale: _fabAnimation,
               child: FloatingActionButton.extended(
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 1;
-                  });
-                  _pageController.animateToPage(
-                    1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
+                onPressed: () => _onTabChanged(1),
                 backgroundColor: themeProvider.lightColorScheme.primary,
                 foregroundColor: themeProvider.lightColorScheme.onPrimary,
                 elevation: 8,

@@ -506,30 +506,42 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                '💡 创建倒计时的小贴士',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '• 为重要的日子设置倒计时，让期待更有仪式感\n'
+                '• 使用不同的颜色主题来区分不同类型的事件\n'
+                '• 添加详细的描述，记录你对这个日子的期待\n'
+                '• 定期回顾和整理你的倒计时列表',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Icon(
-                    Icons.tips_and_updates,
-                    color: Colors.orange[700],
+                    Icons.auto_awesome,
+                    color: Colors.orange,
+                    size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '今日建议',
+                    '让每一刻都变得有意义',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.orange[700],
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '为重要的日子设置倒计时，让每一个值得期待的时刻都不再错过。无论是生日、纪念日，还是重要的考试和旅行，时间的视觉化会让你更好地规划和珍惜每一天。',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                ),
               ),
             ],
           ),
@@ -542,87 +554,225 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     return [
       {
         'title': '生日倒计时',
-        'description': '为家人朋友的生日创建特别的倒计时，让爱更有仪式感',
-        'category': '生日',
+        'description': '记录重要的生日，让每个生日都充满期待',
         'icon': Icons.cake,
-        'colorTheme': 'gradient1',
+        'colorTheme': 'gradient4',
+        'category': '生日',
         'eventType': 'birthday',
       },
       {
-        'title': '考试倒计时',
-        'description': '重要考试临近？让倒计时帮你更好地规划复习时间',
-        'category': '学习',
-        'icon': Icons.school,
+        'title': '节日庆典',
+        'description': '传统节日和特殊庆典的倒计时',
+        'icon': Icons.celebration,
+        'colorTheme': 'gradient1',
+        'category': '节日',
+        'eventType': 'holiday',
+      },
+      {
+        'title': '恋爱纪念日',
+        'description': '记录爱情中的重要时刻',
+        'icon': Icons.favorite,
+        'colorTheme': 'gradient6',
+        'category': '纪念日',
+        'eventType': 'anniversary',
+      },
+      {
+        'title': '工作目标',
+        'description': '项目截止日期和工作里程碑',
+        'icon': Icons.work,
         'colorTheme': 'gradient2',
+        'category': '工作',
         'eventType': 'work',
       },
       {
-        'title': '旅行倒计时',
-        'description': '期待已久的旅行就要开始，让倒计时增加期待感',
-        'category': '旅行',
+        'title': '旅行计划',
+        'description': '期待已久的旅行和假期',
         'icon': Icons.flight,
-        'colorTheme': 'gradient3',
+        'colorTheme': 'gradient5',
+        'category': '旅行',
         'eventType': 'travel',
-      },
-      {
-        'title': '节日倒计时',
-        'description': '传统节日和特殊节庆，让每个节日都更有意义',
-        'category': '节日',
-        'icon': Icons.celebration,
-        'colorTheme': 'gradient4',
-        'eventType': 'holiday',
       },
     ];
   }
 
   List<Map<String, dynamic>> _getPopularEvents() {
-    final now = DateTime.now();
     return [
       {
-        'title': '元旦',
-        'date': '${now.year + 1}年1月1日',
-        'icon': Icons.celebration,
+        'title': '2025年春节',
+        'date': '2025年1月29日',
+        'icon': Icons.festival,
+        'targetDate': DateTime(2025, 1, 29),
         'eventType': 'holiday',
+        'colorTheme': 'gradient1',
       },
       {
-        'title': '春节',
-        'date': '${now.year + 1}年2月10日',
-        'icon': Icons.festival,
+        'title': '2025年元旦',
+        'date': '2025年1月1日',
+        'icon': Icons.celebration,
+        'targetDate': DateTime(2025, 1, 1),
         'eventType': 'holiday',
+        'colorTheme': 'gradient2',
       },
       {
         'title': '情人节',
-        'date': '${now.year + 1}年2月14日',
+        'date': '2025年2月14日',
         'icon': Icons.favorite,
-        'eventType': 'anniversary',
+        'targetDate': DateTime(2025, 2, 14),
+        'eventType': 'holiday',
+        'colorTheme': 'gradient6',
       },
       {
-        'title': '劳动节',
-        'date': '${now.year + 1}年5月1日',
-        'icon': Icons.work,
+        'title': '劳动节假期',
+        'date': '2025年5月1日',
+        'icon': Icons.beach_access,
+        'targetDate': DateTime(2025, 5, 1),
         'eventType': 'holiday',
+        'colorTheme': 'gradient5',
       },
     ];
   }
 
   void _createTemplate(String eventType) {
-    // TODO: 导航到添加页面并预填充模板
+    // TODO: 导航到添加页面并预设事件类型
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('即将创建$eventType模板')),
+      SnackBar(
+        content: Text('创建$eventType倒计时模板'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   void _createFromTemplate(Map<String, dynamic> template) {
-    // TODO: 使用模板创建倒计时
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('即将使用「${template['title']}」模板创建倒计时')),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('使用模板：${template['title']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(template['description']),
+            const SizedBox(height: 16),
+            Text(
+              '这将为你创建一个预设了颜色主题和事件类型的倒计时。',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToAddWithTemplate(template);
+            },
+            child: const Text('使用模板'),
+          ),
+        ],
+      ),
     );
   }
 
   void _createFromEvent(Map<String, dynamic> event) {
-    // TODO: 基于热门事件创建倒计时
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('即将为「${event['title']}」创建倒计时')),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('添加：${event['title']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('目标日期：${event['date']}'),
+            const SizedBox(height: 8),
+            Text(
+              '确定要为这个事件创建倒计时吗？',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _createCountdownFromEvent(event);
+            },
+            child: const Text('创建倒计时'),
+          ),
+        ],
+      ),
     );
+  }
+
+  void _navigateToAddWithTemplate(Map<String, dynamic> template) {
+    // TODO: 导航到添加页面并预设模板数据
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('正在使用${template['title']}模板...'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _createCountdownFromEvent(Map<String, dynamic> event) async {
+    try {
+      final countdown = CountdownModel(
+        title: event['title'],
+        description: '来自热门事件的倒计时',
+        targetDate: event['targetDate'],
+        eventType: event['eventType'],
+        colorTheme: event['colorTheme'] ?? 'gradient1',
+        iconName: _getIconName(event['icon']),
+        createdAt: DateTime.now(),
+      );
+
+      await context.read<CountdownProvider>().addCountdown(countdown);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('${event['title']} 倒计时创建成功！'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('创建失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getIconName(IconData icon) {
+    if (icon == Icons.cake) return 'cake';
+    if (icon == Icons.celebration) return 'celebration';
+    if (icon == Icons.festival) return 'festival';
+    if (icon == Icons.favorite) return 'favorite';
+    if (icon == Icons.work) return 'work';
+    if (icon == Icons.flight) return 'travel';
+    if (icon == Icons.beach_access) return 'holiday';
+    return 'event';
   }
 } 

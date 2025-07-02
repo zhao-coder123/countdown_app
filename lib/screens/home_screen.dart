@@ -511,24 +511,32 @@ class _HomeScreenState extends State<HomeScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.event_note_outlined,
-              size: 80,
+              Icons.event_note_rounded,
+              size: 100,
               color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               '还没有倒计时',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              '点击下方的 + 按钮来添加你的第一个倒计时',
+              '点击下方按钮创建你的第一个倒计时',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            FilledButton.icon(
+              onPressed: () {
+                // 通过Provider触发页面切换到添加页面
+                // 这需要在MainScreen中实现
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('创建倒计时'),
             ),
           ],
         ),
@@ -549,47 +557,38 @@ class _HomeScreenState extends State<HomeScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EditScreen(
-          countdown: countdown,
-          onCountdownUpdated: () {
-            // 编辑完成后刷新数据
-            context.read<CountdownProvider>().loadCountdowns();
-          },
-        ),
+        builder: (context) => EditScreen(countdown: countdown),
       ),
     );
   }
 
   Widget _buildAllCountdownsList(List<CountdownModel> countdowns, CountdownProvider countdownProvider) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverAnimatedList(
-        initialItemCount: countdowns.length,
-        itemBuilder: (context, index, animation) {
-          if (index >= countdowns.length) return const SizedBox.shrink();
-          
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
           final countdown = countdowns[index];
-          return SlideTransition(
-            position: animation.drive(
-              Tween<Offset>(
-                begin: const Offset(1, 0),
-                end: Offset.zero,
-              ).chain(CurveTween(curve: Curves.easeOutCubic)),
-            ),
-            child: FadeTransition(
-              opacity: animation,
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: CountdownCard(
-                  countdown: countdown,
-                  onTap: () => _navigateToDetail(countdown),
-                  onEdit: () => _editCountdown(countdown),
-                  onDelete: () => _deleteCountdown(countdown, countdownProvider),
+          return AnimatedBuilder(
+            animation: _listAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 30 * (1 - _listAnimation.value)),
+                child: Opacity(
+                  opacity: _listAnimation.value,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: CountdownCard(
+                      countdown: countdown,
+                      onTap: () => _navigateToDetail(countdown),
+                      onEdit: () => _editCountdown(countdown),
+                      onDelete: () => _deleteCountdown(countdown, countdownProvider),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
+        childCount: countdowns.length,
       ),
     );
   }
@@ -599,26 +598,44 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除倒计时'),
-        content: Text('确定要删除「${countdown.title}」吗？'),
+        content: Text('确定要删除"${countdown.title}"吗？此操作无法撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('取消'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(context);
+              
               try {
                 await provider.deleteCountdown(countdown.id!);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('删除成功')),
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.delete, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text('已删除"${countdown.title}"'),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('删除失败')),
+                    SnackBar(
+                      content: Text('删除失败：${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }

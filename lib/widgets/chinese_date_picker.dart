@@ -80,7 +80,7 @@ class _ChineseDatePickerState extends State<ChineseDatePicker> {
     final minutes = List.generate(60, (index) => index);
 
     return Container(
-      height: widget.showTime ? 300 : 250,
+      height: widget.showTime ? 400 : 350,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -168,81 +168,22 @@ class _ChineseDatePickerState extends State<ChineseDatePicker> {
           
           // 滚轮选择器
           Expanded(
-            child: Row(
-              children: [
-                // 年份
-                Expanded(
-                  child: _buildPicker(
-                    controller: yearController,
-                    items: years.map((year) => '${year}年').toList(),
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedDate = DateTime(
-                          years[index],
-                          selectedDate.month,
-                          math.min(selectedDate.day, _getDaysInMonth(years[index], selectedDate.month).length),
-                          selectedDate.hour,
-                          selectedDate.minute,
-                        );
-                      });
-                      _updateDate();
-                    },
-                  ),
-                ),
-                
-                // 月份
-                Expanded(
-                  child: _buildPicker(
-                    controller: monthController,
-                    items: months.map((month) => '${month}月').toList(),
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedDate = DateTime(
-                          selectedDate.year,
-                          months[index],
-                          math.min(selectedDate.day, _getDaysInMonth(selectedDate.year, months[index]).length),
-                          selectedDate.hour,
-                          selectedDate.minute,
-                        );
-                      });
-                      _updateDate();
-                    },
-                  ),
-                ),
-                
-                // 日期
-                Expanded(
-                  child: _buildPicker(
-                    controller: dayController,
-                    items: days.map((day) => '${day}日').toList(),
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        selectedDate = DateTime(
-                          selectedDate.year,
-                          selectedDate.month,
-                          days[index],
-                          selectedDate.hour,
-                          selectedDate.minute,
-                        );
-                      });
-                      _updateDate();
-                    },
-                  ),
-                ),
-                
-                if (widget.showTime) ...[
-                  // 小时
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // 年份
                   Expanded(
                     child: _buildPicker(
-                      controller: hourController,
-                      items: hours.map((hour) => '${hour.toString().padLeft(2, '0')}时').toList(),
+                      controller: yearController,
+                      items: years.map((year) => '${year}年').toList(),
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDate = DateTime(
-                            selectedDate.year,
+                            years[index],
                             selectedDate.month,
-                            selectedDate.day,
-                            hours[index],
+                            math.min(selectedDate.day, _getDaysInMonth(years[index], selectedDate.month).length),
+                            selectedDate.hour,
                             selectedDate.minute,
                           );
                         });
@@ -251,27 +192,89 @@ class _ChineseDatePickerState extends State<ChineseDatePicker> {
                     ),
                   ),
                   
-                  // 分钟
+                  // 月份
                   Expanded(
                     child: _buildPicker(
-                      controller: minuteController,
-                      items: minutes.map((minute) => '${minute.toString().padLeft(2, '0')}分').toList(),
+                      controller: monthController,
+                      items: months.map((month) => '${month}月').toList(),
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDate = DateTime(
                             selectedDate.year,
-                            selectedDate.month,
-                            selectedDate.day,
+                            months[index],
+                            math.min(selectedDate.day, _getDaysInMonth(selectedDate.year, months[index]).length),
                             selectedDate.hour,
-                            minutes[index],
+                            selectedDate.minute,
                           );
                         });
                         _updateDate();
                       },
                     ),
                   ),
+                  
+                  // 日期
+                  Expanded(
+                    child: _buildPicker(
+                      controller: dayController,
+                      items: days.map((day) => '${day}日').toList(),
+                      onSelectedItemChanged: (index) {
+                        setState(() {
+                          selectedDate = DateTime(
+                            selectedDate.year,
+                            selectedDate.month,
+                            days[index],
+                            selectedDate.hour,
+                            selectedDate.minute,
+                          );
+                        });
+                        _updateDate();
+                      },
+                    ),
+                  ),
+                  
+                  if (widget.showTime) ...[
+                    // 小时
+                    Expanded(
+                      child: _buildPicker(
+                        controller: hourController,
+                        items: hours.map((hour) => '${hour.toString().padLeft(2, '0')}时').toList(),
+                        onSelectedItemChanged: (index) {
+                          setState(() {
+                            selectedDate = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              hours[index],
+                              selectedDate.minute,
+                            );
+                          });
+                          _updateDate();
+                        },
+                      ),
+                    ),
+                    
+                    // 分钟
+                    Expanded(
+                      child: _buildPicker(
+                        controller: minuteController,
+                        items: minutes.map((minute) => '${minute.toString().padLeft(2, '0')}分').toList(),
+                        onSelectedItemChanged: (index) {
+                          setState(() {
+                            selectedDate = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              selectedDate.hour,
+                              minutes[index],
+                            );
+                          });
+                          _updateDate();
+                        },
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],
@@ -286,19 +289,24 @@ class _ChineseDatePickerState extends State<ChineseDatePicker> {
   }) {
     return CupertinoPicker(
       scrollController: controller,
-      itemExtent: 40,
+      itemExtent: 50,
       onSelectedItemChanged: onSelectedItemChanged,
       selectionOverlay: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
-      children: items.map((item) => Center(
-        child: Text(
-          item,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w500,
+      children: items.map((item) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Center(
+          child: Text(
+            item,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
           ),
         ),
       )).toList(),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/countdown_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/countdown_model.dart';
 import '../widgets/chinese_date_picker.dart';
+import '../widgets/color_picker_widget.dart';
 
 class AddScreen extends StatefulWidget {
   final VoidCallback? onCountdownCreated;
@@ -257,57 +259,149 @@ class _AddScreenState extends State<AddScreen> {
   }
 
   Widget _buildColorThemeSelector() {
-    final List<Map<String, dynamic>> colorThemes = [
-      {'value': 'gradient1', 'label': '紫色渐变', 'colors': [Color(0xFF9400D3), Color(0xFF4A00E0)]},
-      {'value': 'gradient2', 'label': '蓝色渐变', 'colors': [Color(0xFF56CCF2), Color(0xFF2F80ED)]},
-      {'value': 'gradient3', 'label': '靛蓝渐变', 'colors': [Color(0xFF6C63FF), Color(0xFF5046E5)]},
-      {'value': 'gradient4', 'label': '红色渐变', 'colors': [Color(0xFFFF6B6B), Color(0xFFFF8E8E)]},
-      {'value': 'gradient5', 'label': '绿色渐变', 'colors': [Color(0xFF43E97B), Color(0xFF38F9D7)]},
-      {'value': 'gradient6', 'label': '粉色渐变', 'colors': [Color(0xFFF093FB), Color(0xFFF5576C)]},
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '颜色主题',
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          children: [
+            Text(
+              '颜色主题',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _showColorPicker,
+              icon: const Icon(Icons.palette),
+              label: const Text('更多颜色'),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: colorThemes.map((theme) {
-            final isSelected = _selectedColorTheme == theme['value'];
-            return GestureDetector(
+        _buildSelectedColorPreview(),
+        const SizedBox(height: 12),
+        _buildQuickColorSelector(),
+      ],
+    );
+  }
+
+  Widget _buildSelectedColorPreview() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final gradient = themeProvider.getGradient(_selectedColorTheme);
+        
+        return Container(
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '当前选择的主题色彩',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                shadows: [
+                  Shadow(
+                    offset: Offset(1, 1),
+                    blurRadius: 2,
+                    color: Colors.black26,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickColorSelector() {
+    final List<Map<String, dynamic>> quickColors = [
+      {'value': 'gradient1', 'colors': [Color(0xFF9400D3), Color(0xFF4A00E0)]},
+      {'value': 'gradient2', 'colors': [Color(0xFF56CCF2), Color(0xFF2F80ED)]},
+      {'value': 'gradient3', 'colors': [Color(0xFF6C63FF), Color(0xFF5046E5)]},
+      {'value': 'gradient4', 'colors': [Color(0xFFFF6B6B), Color(0xFFFF8E8E)]},
+      {'value': 'gradient5', 'colors': [Color(0xFF43E97B), Color(0xFF38F9D7)]},
+      {'value': 'gradient6', 'colors': [Color(0xFFF093FB), Color(0xFFF5576C)]},
+    ];
+
+    return Row(
+      children: [
+        ...quickColors.map((theme) {
+          final isSelected = _selectedColorTheme == theme['value'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
               onTap: () {
                 setState(() {
                   _selectedColorTheme = theme['value'];
                 });
               },
               child: Container(
-                width: 60,
-                height: 60,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: List<Color>.from(theme['colors']),
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: isSelected 
-                      ? Border.all(color: Theme.of(context).colorScheme.primary, width: 3)
+                      ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
                       : null,
                 ),
                 child: isSelected 
-                    ? const Icon(Icons.check, color: Colors.white, size: 24)
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
                     : null,
               ),
-            );
-          }).toList(),
+            ),
+          );
+        }).toList(),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+          child: IconButton(
+            onPressed: _showColorPicker,
+            icon: Icon(
+              Icons.add,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            padding: EdgeInsets.zero,
+          ),
         ),
       ],
     );
+  }
+
+  Future<void> _showColorPicker() async {
+    final selectedTheme = await showColorPickerDialog(
+      context,
+      initialColorTheme: _selectedColorTheme,
+    );
+    
+    if (selectedTheme != null) {
+      setState(() {
+        _selectedColorTheme = selectedTheme;
+      });
+    }
   }
 
   Future<void> _selectDate() async {
@@ -418,7 +512,7 @@ class _AddScreenState extends State<AddScreen> {
           _selectedIcon = 'event';
         });
         
-        // 通知父组件切换到首页
+        // 通知父组件（MainScreen）切换到首页
         widget.onCountdownCreated?.call();
       }
     } catch (e) {
