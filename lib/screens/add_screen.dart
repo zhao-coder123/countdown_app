@@ -5,6 +5,8 @@ import '../providers/theme_provider.dart';
 import '../models/countdown_model.dart';
 import '../widgets/chinese_date_picker.dart';
 import '../widgets/color_picker_widget.dart';
+import '../core/utils/error_handler.dart';
+import '../core/errors/app_exception.dart';
 
 class AddScreen extends StatefulWidget {
   final VoidCallback? onCountdownCreated;
@@ -434,109 +436,50 @@ class _AddScreenState extends State<AddScreen> {
 
   void _saveCountdown() async {
     if (_titleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入标题')),
-      );
+      ErrorHandler.showErrorSnackBar(context, '请输入标题');
       return;
     }
 
-    // 显示加载状态
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('正在保存...'),
-              ],
-            ),
-          ),
-        ),
-      ),
+    final result = await ErrorHandler.runAsync(
+      context,
+      () async {
+        final countdown = CountdownModel(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          targetDate: _selectedDate,
+          eventType: _selectedEventType,
+          colorTheme: _selectedColorTheme,
+          iconName: _selectedIcon,
+          createdAt: DateTime.now(),
+          isMemorial: _isMemorial,
+        );
+
+        await context.read<CountdownProvider>().addCountdown(countdown);
+        return countdown;
+      },
+      loadingMessage: '正在保存...',
+      successMessage: _isMemorial ? '纪念日创建成功！' : '倒计时创建成功！',
+      errorMessage: '创建失败',
     );
 
-    try {
-      final countdown = CountdownModel(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        targetDate: _selectedDate,
-        eventType: _selectedEventType,
-        colorTheme: _selectedColorTheme,
-        iconName: _selectedIcon,
-        createdAt: DateTime.now(),
-        isMemorial: _isMemorial,
-      );
-
-      await context.read<CountdownProvider>().addCountdown(countdown);
+    if (result != null && mounted) {
+      // 清空表单
+      _titleController.clear();
+      _descriptionController.clear();
+      setState(() {
+        // 根据当前模式设置默认日期
+        if (_isMemorial) {
+          _selectedDate = DateTime.now().subtract(const Duration(days: 365));
+        } else {
+          _selectedDate = DateTime.now().add(const Duration(days: 30));
+        }
+        _selectedEventType = 'custom';
+        _selectedColorTheme = 'gradient1';
+        _selectedIcon = 'event';
+      });
       
-      if (mounted) {
-        // 先关闭加载对话框
-        Navigator.pop(context);
-        
-        // 显示成功消息
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(_isMemorial ? '纪念日创建成功！' : '倒计时创建成功！'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-        
-        // 清空表单
-        _titleController.clear();
-        _descriptionController.clear();
-        setState(() {
-          // 根据当前模式设置默认日期
-          if (_isMemorial) {
-            _selectedDate = DateTime.now().subtract(const Duration(days: 365));
-          } else {
-            _selectedDate = DateTime.now().add(const Duration(days: 30));
-          }
-          _selectedEventType = 'custom';
-          _selectedColorTheme = 'gradient1';
-          _selectedIcon = 'event';
-        });
-        
-        // 通知父组件（MainScreen）切换到首页
-        widget.onCountdownCreated?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        // 关闭加载对话框
-        Navigator.pop(context);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('创建失败：${e.toString()}'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
+      // 通知父组件（MainScreen）切换到首页
+      widget.onCountdownCreated?.call();
     }
   }
 

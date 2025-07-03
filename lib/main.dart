@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 
 import 'providers/countdown_provider.dart';
 import 'providers/theme_provider.dart';
@@ -10,6 +11,20 @@ import 'screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 设置全局错误处理
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exception}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
+  
+  // 捕获未处理的异步错误
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught error: $error');
+    debugPrint('Stack trace: $stack');
+    return true;
+  };
   
   try {
     // 初始化SharedPreferences
@@ -24,6 +39,7 @@ void main() async {
     runApp(const CountdownApp());
   } catch (e) {
     // 如果初始化失败，运行基本版本
+    debugPrint('Initialization error: $e');
     runApp(const BasicApp());
   }
 }

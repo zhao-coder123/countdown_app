@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/countdown_model.dart';
+import '../core/errors/app_exception.dart' as app_errors;
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -11,8 +12,16 @@ class DatabaseService {
   static Database? _database;
 
   Future<Database> get database async {
-    _database ??= await _initDatabase();
-    return _database!;
+    try {
+      _database ??= await _initDatabase();
+      return _database!;
+    } catch (e, stackTrace) {
+      throw app_errors.DatabaseException(
+        message: '数据库初始化失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<Database> _initDatabase() async {
@@ -121,20 +130,36 @@ class DatabaseService {
   }
 
   Future<int> insertCountdown(CountdownModel countdown) async {
-    final db = await database;
-    return await db.insert('countdowns', countdown.toMap());
+    try {
+      final db = await database;
+      return await db.insert('countdowns', countdown.toMap());
+    } catch (e, stackTrace) {
+      throw app_errors.DatabaseException(
+        message: '添加倒计时失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<List<CountdownModel>> getAllCountdowns() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'countdowns',
-      orderBy: 'targetDate ASC',
-    );
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        'countdowns',
+        orderBy: 'targetDate ASC',
+      );
 
-    return List.generate(maps.length, (i) {
-      return CountdownModel.fromMap(maps[i]);
-    });
+      return List.generate(maps.length, (i) {
+        return CountdownModel.fromMap(maps[i]);
+      });
+    } catch (e, stackTrace) {
+      throw app_errors.DatabaseException(
+        message: '获取倒计时列表失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<List<CountdownModel>> getActiveCountdowns() async {
@@ -180,22 +205,38 @@ class DatabaseService {
   }
 
   Future<int> updateCountdown(CountdownModel countdown) async {
-    final db = await database;
-    return await db.update(
-      'countdowns',
-      countdown.toMap(),
-      where: 'id = ?',
-      whereArgs: [countdown.id],
-    );
+    try {
+      final db = await database;
+      return await db.update(
+        'countdowns',
+        countdown.toMap(),
+        where: 'id = ?',
+        whereArgs: [countdown.id],
+      );
+    } catch (e, stackTrace) {
+      throw app_errors.DatabaseException(
+        message: '更新倒计时失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<int> deleteCountdown(int id) async {
-    final db = await database;
-    return await db.delete(
-      'countdowns',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    try {
+      final db = await database;
+      return await db.delete(
+        'countdowns',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e, stackTrace) {
+      throw app_errors.DatabaseException(
+        message: '删除倒计时失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<int> archiveCountdown(int id) async {

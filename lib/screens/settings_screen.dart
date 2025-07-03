@@ -6,6 +6,7 @@ import '../providers/countdown_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/export_service.dart';
 import '../widgets/color_picker_widget.dart';
+import '../widgets/enhanced_color_picker.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -109,6 +110,19 @@ class _SettingsScreenState extends State<SettingsScreen>
                         const SizedBox(height: 20),
                         _buildSection(
                           context,
+                          '界面自定义',
+                          Icons.tune,
+                          [
+                            _buildCardStyleSelector(themeProvider),
+                            _buildAnimationToggle(themeProvider),
+                            _buildCompactModeToggle(themeProvider),
+                            _buildDisplayOptionsExpansion(themeProvider),
+                            _buildLayoutOptionsExpansion(themeProvider),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildSection(
+                          context,
                           '功能设置',
                           Icons.settings,
                           [
@@ -139,6 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             _buildExportDataTile(),
                             _buildClearDataTile(countdownProvider),
                             _buildBackupSetting(),
+                            _buildResetSettingsTile(themeProvider),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -686,39 +701,69 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _showAdvancedColorPicker(ThemeProvider themeProvider) async {
-    final selectedTheme = await showColorPickerDialog(
-      context,
-      initialColorTheme: themeProvider.colorSchemeName,
-      showGradients: true,
-      showPresets: true,
-      showCustom: true,
-    );
-    
-    if (selectedTheme != null) {
-      HapticFeedback.lightImpact();
-      // 使用新的方法设置主题，支持自定义颜色
-      await themeProvider.setCurrentColorTheme(selectedTheme);
+    try {
+      final selectedTheme = await showEnhancedColorPicker(
+        context: context,
+        initialColorTheme: themeProvider.colorSchemeName,
+      );
       
-      // 显示成功消息
+      if (selectedTheme != null && mounted) {
+        HapticFeedback.lightImpact();
+        // 更新新的预设主题到ThemeProvider中
+        await _updateThemeProviderWithNewThemes(themeProvider, selectedTheme);
+        // 使用新的方法设置主题，支持自定义颜色
+        await themeProvider.setCurrentColorTheme(selectedTheme);
+        
+        // 显示成功消息
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('主题已更换为 ${_getThemeDisplayName(selectedTheme, themeProvider)}'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in color picker: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('主题已更换为 ${_getThemeDisplayName(selectedTheme, themeProvider)}'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+          const SnackBar(
+            content: Text('主题选择出现错误，请重试'),
+            backgroundColor: Colors.red,
           ),
         );
       }
     }
+  }
+
+  // 更新ThemeProvider以支持新的主题
+  Future<void> _updateThemeProviderWithNewThemes(ThemeProvider themeProvider, String selectedTheme) async {
+    // 定义新增的主题
+    final newThemes = {
+      'sunset': [const Color(0xFFFF9A9E), const Color(0xFFFECAB6)],
+      'ocean': [const Color(0xFF667eea), const Color(0xFF764ba2)],
+      'aurora': [const Color(0xFF00C9FF), const Color(0xFF92FE9D)],
+      'cherry': [const Color(0xFFFFB6C1), const Color(0xFFFFC0CB)],
+      'midnight': [const Color(0xFF2C3E50), const Color(0xFF34495E)],
+      'charcoal': [const Color(0xFF36454F), const Color(0xFF2F4F4F)],
+      'forest': [const Color(0xFF134E5E), const Color(0xFF71B280)],
+    };
+
+         // 如果选中的是新增主题，将其添加到gradientSchemes中
+     if (newThemes.containsKey(selectedTheme)) {
+       ThemeProvider.gradientSchemes[selectedTheme] = newThemes[selectedTheme]!;
+     }
   }
 
   // 修改：简化主题显示名称方法
@@ -1303,5 +1348,328 @@ class _SettingsScreenState extends State<SettingsScreen>
         ],
       ),
     );
+  }
+
+  // 新增的UI自定义相关方法
+  Widget _buildCardStyleSelector(ThemeProvider themeProvider) {
+    return ListTile(
+      leading: Icon(
+        Icons.style,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('卡片样式'),
+      subtitle: Text(_getCardStyleLabel(themeProvider.cardStyle)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showCardStyleDialog(themeProvider),
+    );
+  }
+
+  Widget _buildAnimationToggle(ThemeProvider themeProvider) {
+    return SwitchListTile(
+      title: const Text('动画效果'),
+      subtitle: const Text('开启/关闭界面动画效果'),
+      value: themeProvider.animationEnabled,
+      onChanged: (value) {
+        HapticFeedback.lightImpact();
+        themeProvider.setAnimationEnabled(value);
+      },
+      secondary: Icon(
+        themeProvider.animationEnabled ? Icons.animation : Icons.stop_circle,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  Widget _buildCompactModeToggle(ThemeProvider themeProvider) {
+    return SwitchListTile(
+      title: const Text('紧凑模式'),
+      subtitle: const Text('使用更小的卡片显示更多内容'),
+      value: themeProvider.compactMode,
+      onChanged: (value) {
+        HapticFeedback.lightImpact();
+        themeProvider.setCompactMode(value);
+      },
+      secondary: Icon(
+        themeProvider.compactMode ? Icons.view_compact : Icons.view_comfortable,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  Widget _buildDisplayOptionsExpansion(ThemeProvider themeProvider) {
+    return ExpansionTile(
+      leading: Icon(
+        Icons.visibility,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('显示选项'),
+      subtitle: const Text('自定义显示的内容'),
+      children: [
+        SwitchListTile(
+          title: const Text('显示进度条'),
+          value: themeProvider.showProgressBar,
+          onChanged: (value) {
+            themeProvider.setShowProgressBar(value);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('显示描述'),
+          value: themeProvider.showDescription,
+          onChanged: (value) {
+            themeProvider.setShowDescription(value);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('显示事件类型'),
+          value: themeProvider.showEventType,
+          onChanged: (value) {
+            themeProvider.setShowEventType(value);
+          },
+        ),
+        SwitchListTile(
+          title: const Text('减少透明效果'),
+          subtitle: const Text('提高对比度，改善可读性'),
+          value: themeProvider.reduceTransparency,
+          onChanged: (value) {
+            themeProvider.setReduceTransparency(value);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLayoutOptionsExpansion(ThemeProvider themeProvider) {
+    return ExpansionTile(
+      leading: Icon(
+        Icons.dashboard,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: const Text('布局选项'),
+      subtitle: const Text('调整间距和尺寸'),
+      children: [
+        ListTile(
+          title: const Text('卡片圆角'),
+          subtitle: Slider(
+            value: themeProvider.cardBorderRadius,
+            min: 0,
+            max: 32,
+            divisions: 8,
+            label: '${themeProvider.cardBorderRadius.round()}px',
+            onChanged: (value) {
+              themeProvider.setCardBorderRadius(value);
+            },
+          ),
+        ),
+        ListTile(
+          title: const Text('卡片间距'),
+          subtitle: Slider(
+            value: themeProvider.cardSpacing,
+            min: 4,
+            max: 20,
+            divisions: 8,
+            label: '${themeProvider.cardSpacing.round()}px',
+            onChanged: (value) {
+              themeProvider.setCardSpacing(value);
+            },
+          ),
+        ),
+        ListTile(
+          title: const Text('内容边距'),
+          subtitle: Slider(
+            value: themeProvider.contentPadding,
+            min: 8,
+            max: 32,
+            divisions: 6,
+            label: '${themeProvider.contentPadding.round()}px',
+            onChanged: (value) {
+              themeProvider.setContentPadding(value);
+            },
+          ),
+        ),
+        ListTile(
+          title: const Text('图标大小'),
+          subtitle: Slider(
+            value: themeProvider.iconSize,
+            min: 16,
+            max: 32,
+            divisions: 8,
+            label: '${themeProvider.iconSize.round()}px',
+            onChanged: (value) {
+              themeProvider.setIconSize(value);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getCardStyleLabel(String style) {
+    switch (style) {
+      case 'gradient':
+        return '渐变样式';
+      case 'flat':
+        return '扁平样式';
+      case 'outlined':
+        return '线框样式';
+      default:
+        return '渐变样式';
+    }
+  }
+
+  void _showCardStyleDialog(ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择卡片样式'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildCardStyleOption(
+              '渐变样式',
+              '使用渐变色背景，颜色丰富',
+              'gradient',
+              themeProvider,
+            ),
+            _buildCardStyleOption(
+              '扁平样式',
+              '简洁的纯色背景',
+              'flat',
+              themeProvider,
+            ),
+            _buildCardStyleOption(
+              '线框样式',
+              '仅显示边框，清爽简约',
+              'outlined',
+              themeProvider,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardStyleOption(
+    String title,
+    String description,
+    String value,
+    ThemeProvider themeProvider,
+  ) {
+    return ListTile(
+      leading: Icon(
+        value == themeProvider.cardStyle ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(title),
+      subtitle: Text(description),
+      onTap: () {
+        themeProvider.setCardStyle(value);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _buildResetSettingsTile(ThemeProvider themeProvider) {
+    return ListTile(
+      leading: Icon(
+        Icons.restore,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: const Text('重置所有设置'),
+      subtitle: const Text('恢复应用的默认设置'),
+      onTap: () => _showResetSettingsDialog(themeProvider),
+    );
+  }
+
+  void _showResetSettingsDialog(ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('重置设置'),
+        content: const Text('此操作将恢复所有设置为默认值，包括主题、字体、界面自定义等。确定要继续吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(context);
+              await _resetAllSettings(themeProvider);
+            },
+            child: const Text('重置'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resetAllSettings(ThemeProvider themeProvider) async {
+    try {
+      // 显示加载对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在重置设置...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 重置所有设置
+      themeProvider.resetToDefaults();
+      
+      // 等待一段时间以确保设置保存
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('所有设置已重置为默认值'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('重置设置失败：${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 } 

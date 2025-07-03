@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/countdown_model.dart';
 import '../services/database_service.dart';
+import '../core/errors/app_exception.dart';
 
 class ExportService {
   static const String _exportFileName = 'countdown_data_export.json';
@@ -33,8 +34,12 @@ class ExportService {
       await file.writeAsString(jsonString);
       
       return file.path;
-    } catch (e) {
-      throw Exception('导出失败：${e.toString()}');
+    } catch (e, stackTrace) {
+      throw FileException(
+        message: '导出数据失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -49,12 +54,18 @@ class ExportService {
       );
       
       if (result == null || result.files.isEmpty) {
-        throw Exception('未选择文件');
+        throw ValidationException(
+          message: '未选择文件',
+          code: 'NO_FILE_SELECTED',
+        );
       }
       
       final filePath = result.files.first.path;
       if (filePath == null) {
-        throw Exception('文件路径无效');
+        throw ValidationException(
+          message: '文件路径无效',
+          code: 'INVALID_FILE_PATH',
+        );
       }
       
       // 读取文件内容
@@ -66,7 +77,10 @@ class ExportService {
       
       // 验证格式
       if (!data.containsKey('countdowns')) {
-        throw Exception('无效的备份文件格式');
+        throw ValidationException(
+          message: '无效的备份文件格式',
+          code: 'INVALID_BACKUP_FORMAT',
+        );
       }
       
       final countdownsData = data['countdowns'] as List<dynamic>;
@@ -77,8 +91,20 @@ class ExportService {
           .toList();
       
       return countdowns;
-    } catch (e) {
-      throw Exception('导入失败：${e.toString()}');
+    } on ValidationException {
+      rethrow;
+    } on FormatException catch (e, stackTrace) {
+      throw FileException(
+        message: '文件格式错误',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    } catch (e, stackTrace) {
+      throw FileException(
+        message: '导入数据失败',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -26,6 +27,19 @@ class ThemeProvider with ChangeNotifier {
   int _autoRefreshInterval = 1; // 自动刷新间隔（秒）
   bool _defaultIsMemorial = false; // 默认是否为纪念日模式
 
+  // 新增UI自定义属性
+  bool _animationEnabled = true;
+  double _cardBorderRadius = 16.0;
+  double _cardSpacing = 8.0;
+  double _contentPadding = 16.0;
+  bool _showProgressBar = true;
+  bool _showDescription = true;
+  String _cardStyle = 'gradient'; // 'gradient', 'flat', 'outlined'
+  bool _compactMode = false;
+  double _iconSize = 24.0;
+  bool _showEventType = true;
+  bool _reduceTransparency = false;
+
   ThemeMode get themeMode => _themeMode;
   String get colorSchemeName => _colorSchemeName;
   String get fontFamily => _fontFamily;
@@ -36,6 +50,19 @@ class ThemeProvider with ChangeNotifier {
   double get fontSize => _fontSize;
   int get autoRefreshInterval => _autoRefreshInterval;
   bool get defaultIsMemorial => _defaultIsMemorial;
+
+  // Getters for new properties
+  bool get animationEnabled => _animationEnabled;
+  double get cardBorderRadius => _cardBorderRadius;
+  double get cardSpacing => _cardSpacing;
+  double get contentPadding => _contentPadding;
+  bool get showProgressBar => _showProgressBar;
+  bool get showDescription => _showDescription;
+  String get cardStyle => _cardStyle;
+  bool get compactMode => _compactMode;
+  double get iconSize => _iconSize;
+  bool get showEventType => _showEventType;
+  bool get reduceTransparency => _reduceTransparency;
 
   // 兼容旧API的getter
   bool get isDarkMode => _themeMode == ThemeMode.dark;
@@ -115,8 +142,15 @@ class ThemeProvider with ChangeNotifier {
   ColorScheme get lightColorScheme {
     if (_colorSchemes.containsKey(_colorSchemeName)) {
       return _colorSchemes[_colorSchemeName]!;
+    } else if (gradientSchemes.containsKey(_colorSchemeName)) {
+      // 如果是渐变主题或自定义颜色，从渐变的第一个颜色生成ColorScheme
+      final gradientColors = gradientSchemes[_colorSchemeName]!;
+      return ColorScheme.fromSeed(
+        seedColor: gradientColors.first,
+        brightness: Brightness.light,
+      );
     } else {
-      // 如果是自定义颜色，使用默认的purple方案
+      // 如果都不匹配，使用默认的purple方案
       return _colorSchemes['purple']!;
     }
   }
@@ -124,8 +158,15 @@ class ThemeProvider with ChangeNotifier {
   ColorScheme get darkColorScheme {
     if (_darkColorSchemes.containsKey(_colorSchemeName)) {
       return _darkColorSchemes[_colorSchemeName]!;
+    } else if (gradientSchemes.containsKey(_colorSchemeName)) {
+      // 如果是渐变主题或自定义颜色，从渐变的第一个颜色生成ColorScheme
+      final gradientColors = gradientSchemes[_colorSchemeName]!;
+      return ColorScheme.fromSeed(
+        seedColor: gradientColors.first,
+        brightness: Brightness.dark,
+      );
     } else {
-      // 如果是自定义颜色，使用默认的purple方案
+      // 如果都不匹配，使用默认的purple方案
       return _darkColorSchemes['purple']!;
     }
   }
@@ -161,7 +202,43 @@ class ThemeProvider with ChangeNotifier {
       }
     }
     
+    await _loadPreferences();
+    
     notifyListeners();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Load new UI customization preferences
+    _animationEnabled = prefs.getBool('animationEnabled') ?? true;
+    _cardBorderRadius = prefs.getDouble('cardBorderRadius') ?? 16.0;
+    _cardSpacing = prefs.getDouble('cardSpacing') ?? 8.0;
+    _contentPadding = prefs.getDouble('contentPadding') ?? 16.0;
+    _showProgressBar = prefs.getBool('showProgressBar') ?? true;
+    _showDescription = prefs.getBool('showDescription') ?? true;
+    _cardStyle = prefs.getString('cardStyle') ?? 'gradient';
+    _compactMode = prefs.getBool('compactMode') ?? false;
+    _iconSize = prefs.getDouble('iconSize') ?? 24.0;
+    _showEventType = prefs.getBool('showEventType') ?? true;
+    _reduceTransparency = prefs.getBool('reduceTransparency') ?? false;
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Save new UI customization preferences
+    await prefs.setBool('animationEnabled', _animationEnabled);
+    await prefs.setDouble('cardBorderRadius', _cardBorderRadius);
+    await prefs.setDouble('cardSpacing', _cardSpacing);
+    await prefs.setDouble('contentPadding', _contentPadding);
+    await prefs.setBool('showProgressBar', _showProgressBar);
+    await prefs.setBool('showDescription', _showDescription);
+    await prefs.setString('cardStyle', _cardStyle);
+    await prefs.setBool('compactMode', _compactMode);
+    await prefs.setDouble('iconSize', _iconSize);
+    await prefs.setBool('showEventType', _showEventType);
+    await prefs.setBool('reduceTransparency', _reduceTransparency);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -334,11 +411,20 @@ class ThemeProvider with ChangeNotifier {
       elevation: 0,
       scrolledUnderElevation: 1,
       centerTitle: true,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_cardBorderRadius),
+      ),
+      margin: EdgeInsets.symmetric(
+        horizontal: _contentPadding / 2,
+        vertical: _cardSpacing / 2,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -346,6 +432,7 @@ class ThemeProvider with ChangeNotifier {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -353,12 +440,15 @@ class ThemeProvider with ChangeNotifier {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      filled: true,
+      fillColor: lightColorScheme.surfaceVariant.withOpacity(0.3),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -367,6 +457,26 @@ class ThemeProvider with ChangeNotifier {
       unselectedItemColor: lightColorScheme.onSurfaceVariant,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: lightColorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: lightColorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
     ),
   );
 
@@ -382,11 +492,22 @@ class ThemeProvider with ChangeNotifier {
       elevation: 0,
       scrolledUnderElevation: 1,
       centerTitle: true,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
     ),
     cardTheme: CardThemeData(
-      elevation: 2,
+      elevation: 4, // 暗色模式下增加阴影以提高层次感
+      color: darkColorScheme.surfaceVariant,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_cardBorderRadius),
+      ),
+      margin: EdgeInsets.symmetric(
+        horizontal: _contentPadding / 2,
+        vertical: _cardSpacing / 2,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -394,6 +515,7 @@ class ThemeProvider with ChangeNotifier {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -401,12 +523,15 @@ class ThemeProvider with ChangeNotifier {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      filled: true,
+      fillColor: darkColorScheme.surfaceVariant.withOpacity(0.5),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -415,6 +540,32 @@ class ThemeProvider with ChangeNotifier {
       unselectedItemColor: darkColorScheme.onSurfaceVariant,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: darkColorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: darkColorScheme.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+    // 暗色模式专用配置
+    scaffoldBackgroundColor: darkColorScheme.background,
+    dividerColor: darkColorScheme.outline.withOpacity(0.2),
+    drawerTheme: DrawerThemeData(
+      backgroundColor: darkColorScheme.surface,
     ),
   );
 
@@ -498,5 +649,144 @@ class ThemeProvider with ChangeNotifier {
         
         return '自定义主题';
     }
+  }
+
+  // Methods to update new properties
+  void setAnimationEnabled(bool enabled) {
+    _animationEnabled = enabled;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setCardBorderRadius(double radius) {
+    _cardBorderRadius = radius;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setCardSpacing(double spacing) {
+    _cardSpacing = spacing;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setContentPadding(double padding) {
+    _contentPadding = padding;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setShowProgressBar(bool show) {
+    _showProgressBar = show;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setShowDescription(bool show) {
+    _showDescription = show;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setCardStyle(String style) {
+    _cardStyle = style;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setCompactMode(bool compact) {
+    _compactMode = compact;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setIconSize(double size) {
+    _iconSize = size;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setShowEventType(bool show) {
+    _showEventType = show;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  void setReduceTransparency(bool reduce) {
+    _reduceTransparency = reduce;
+    _savePreferences();
+    notifyListeners();
+  }
+
+  // Helper method to get card decoration based on style
+  BoxDecoration getCardDecoration(String colorTheme, BuildContext context) {
+    final gradient = getGradient(colorTheme);
+    final primaryColor = gradient.colors.first;
+    
+    switch (_cardStyle) {
+      case 'flat':
+        return BoxDecoration(
+          color: primaryColor.withOpacity(_reduceTransparency ? 0.8 : 0.1),
+          borderRadius: BorderRadius.circular(_cardBorderRadius),
+        );
+      case 'outlined':
+        return BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(_cardBorderRadius),
+          border: Border.all(
+            color: primaryColor.withOpacity(0.5),
+            width: 2,
+          ),
+        );
+      case 'gradient':
+      default:
+        return BoxDecoration(
+          gradient: _reduceTransparency 
+            ? LinearGradient(
+                colors: gradient.colors.map((c) => c.withOpacity(0.9)).toList(),
+                begin: gradient.begin,
+                end: gradient.end,
+              )
+            : gradient,
+          borderRadius: BorderRadius.circular(_cardBorderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withOpacity(_reduceTransparency ? 0.15 : 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        );
+    }
+  }
+
+  // Get spacing between cards
+  EdgeInsets get cardMargin => EdgeInsets.symmetric(
+    horizontal: _contentPadding,
+    vertical: _cardSpacing,
+  );
+
+  // Get card content padding
+  EdgeInsets get cardContentPadding => EdgeInsets.all(_contentPadding);
+
+  // Reset to default settings
+  void resetToDefaults() {
+    _animationEnabled = true;
+    _cardBorderRadius = 16.0;
+    _cardSpacing = 8.0;
+    _contentPadding = 16.0;
+    _showProgressBar = true;
+    _showDescription = true;
+    _cardStyle = 'gradient';
+    _compactMode = false;
+    _iconSize = 24.0;
+    _showEventType = true;
+    _reduceTransparency = false;
+    _fontSize = 1.0;
+    _themeMode = ThemeMode.system;
+    _colorSchemeName = 'purple';
+    
+    _savePreferences();
+    notifyListeners();
   }
 } 

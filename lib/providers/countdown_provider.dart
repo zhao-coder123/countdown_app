@@ -54,6 +54,7 @@ class CountdownProvider with ChangeNotifier {
       debugPrint('Error loading countdowns: $e');
       _countdowns = [];
       _filteredCountdowns = [];
+      rethrow; // 重新抛出异常，让调用方处理
     } finally {
       _isLoading = false;
       notifyListeners();
