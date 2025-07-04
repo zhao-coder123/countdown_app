@@ -443,18 +443,18 @@ class _AddScreenState extends State<AddScreen> {
     final result = await ErrorHandler.runAsync(
       context,
       () async {
-        final countdown = CountdownModel(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          targetDate: _selectedDate,
-          eventType: _selectedEventType,
-          colorTheme: _selectedColorTheme,
-          iconName: _selectedIcon,
-          createdAt: DateTime.now(),
-          isMemorial: _isMemorial,
-        );
+      final countdown = CountdownModel(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        targetDate: _selectedDate,
+        eventType: _selectedEventType,
+        colorTheme: _selectedColorTheme,
+        iconName: _selectedIcon,
+        createdAt: DateTime.now(),
+        isMemorial: _isMemorial,
+      );
 
-        await context.read<CountdownProvider>().addCountdown(countdown);
+      await context.read<CountdownProvider>().addCountdown(countdown);
         return countdown;
       },
       loadingMessage: '正在保存...',
@@ -463,23 +463,23 @@ class _AddScreenState extends State<AddScreen> {
     );
 
     if (result != null && mounted) {
-      // 清空表单
-      _titleController.clear();
-      _descriptionController.clear();
-      setState(() {
-        // 根据当前模式设置默认日期
-        if (_isMemorial) {
-          _selectedDate = DateTime.now().subtract(const Duration(days: 365));
-        } else {
-          _selectedDate = DateTime.now().add(const Duration(days: 30));
-        }
-        _selectedEventType = 'custom';
-        _selectedColorTheme = 'gradient1';
-        _selectedIcon = 'event';
-      });
-      
-      // 通知父组件（MainScreen）切换到首页
-      widget.onCountdownCreated?.call();
+        // 清空表单
+        _titleController.clear();
+        _descriptionController.clear();
+        setState(() {
+          // 根据当前模式设置默认日期
+          if (_isMemorial) {
+            _selectedDate = DateTime.now().subtract(const Duration(days: 365));
+          } else {
+            _selectedDate = DateTime.now().add(const Duration(days: 30));
+          }
+          _selectedEventType = 'custom';
+          _selectedColorTheme = 'gradient1';
+          _selectedIcon = 'event';
+        });
+        
+        // 通知父组件（MainScreen）切换到首页
+        widget.onCountdownCreated?.call();
     }
   }
 

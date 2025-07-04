@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../models/countdown_model.dart';
 import '../providers/theme_provider.dart';
 import '../providers/countdown_provider.dart';
+import '../widgets/hourglass_view.dart';
 import 'dart:async';
 
 class DetailScreen extends StatefulWidget {
@@ -183,6 +184,12 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildCountdownRing() {
+    // 纪念日模式下显示沙漏视图
+    if (widget.countdown.isMemorial) {
+      return _buildHourglassDisplay();
+    }
+    
+    // 普通倒计时模式显示环形进度条
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -241,7 +248,42 @@ class _DetailScreenState extends State<DetailScreen>
     );
   }
 
+  Widget _buildHourglassDisplay() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final gradientColors = themeProvider.getGradient(widget.countdown.colorTheme).colors;
+    
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pulseAnimation.value,
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.3),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: HourglassView(
+              elapsed: widget.countdown.timeRemaining,
+              primaryColor: gradientColors.first,
+              secondaryColor: gradientColors.length > 1 ? gradientColors[1] : gradientColors.first,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTimeDisplay() {
+    // 纪念日模式下沙漏已经包含时间显示，这里返回空
+    if (widget.countdown.isMemorial) {
+      return const SizedBox.shrink();
+    }
+    
     // 使用实时计算的时间差
     final now = DateTime.now();
     final targetDate = widget.countdown.targetDate;
@@ -375,9 +417,9 @@ class _DetailScreenState extends State<DetailScreen>
         const SizedBox(width: 12),
         Expanded(
           child: _buildInfoCard(
-            '目标日期',
+            widget.countdown.isMemorial ? '纪念日期' : '目标日期',
             _formatDate(widget.countdown.targetDate),
-            Icons.flag,
+            widget.countdown.isMemorial ? Icons.favorite : Icons.flag,
           ),
         ),
       ],

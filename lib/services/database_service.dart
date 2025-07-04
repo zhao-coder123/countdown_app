@@ -13,8 +13,8 @@ class DatabaseService {
 
   Future<Database> get database async {
     try {
-      _database ??= await _initDatabase();
-      return _database!;
+    _database ??= await _initDatabase();
+    return _database!;
     } catch (e, stackTrace) {
       throw app_errors.DatabaseException(
         message: '数据库初始化失败',
@@ -131,8 +131,8 @@ class DatabaseService {
 
   Future<int> insertCountdown(CountdownModel countdown) async {
     try {
-      final db = await database;
-      return await db.insert('countdowns', countdown.toMap());
+    final db = await database;
+    return await db.insert('countdowns', countdown.toMap());
     } catch (e, stackTrace) {
       throw app_errors.DatabaseException(
         message: '添加倒计时失败',
@@ -144,15 +144,15 @@ class DatabaseService {
 
   Future<List<CountdownModel>> getAllCountdowns() async {
     try {
-      final db = await database;
-      final List<Map<String, dynamic>> maps = await db.query(
-        'countdowns',
-        orderBy: 'targetDate ASC',
-      );
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'countdowns',
+      orderBy: 'targetDate ASC',
+    );
 
-      return List.generate(maps.length, (i) {
-        return CountdownModel.fromMap(maps[i]);
-      });
+    return List.generate(maps.length, (i) {
+      return CountdownModel.fromMap(maps[i]);
+    });
     } catch (e, stackTrace) {
       throw app_errors.DatabaseException(
         message: '获取倒计时列表失败',
@@ -206,13 +206,13 @@ class DatabaseService {
 
   Future<int> updateCountdown(CountdownModel countdown) async {
     try {
-      final db = await database;
-      return await db.update(
-        'countdowns',
-        countdown.toMap(),
-        where: 'id = ?',
-        whereArgs: [countdown.id],
-      );
+    final db = await database;
+    return await db.update(
+      'countdowns',
+      countdown.toMap(),
+      where: 'id = ?',
+      whereArgs: [countdown.id],
+    );
     } catch (e, stackTrace) {
       throw app_errors.DatabaseException(
         message: '更新倒计时失败',
@@ -224,12 +224,12 @@ class DatabaseService {
 
   Future<int> deleteCountdown(int id) async {
     try {
-      final db = await database;
-      return await db.delete(
-        'countdowns',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+    final db = await database;
+    return await db.delete(
+      'countdowns',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     } catch (e, stackTrace) {
       throw app_errors.DatabaseException(
         message: '删除倒计时失败',

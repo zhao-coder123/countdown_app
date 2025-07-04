@@ -704,35 +704,35 @@ class _SettingsScreenState extends State<SettingsScreen>
     try {
       final selectedTheme = await showEnhancedColorPicker(
         context: context,
-        initialColorTheme: themeProvider.colorSchemeName,
-      );
-      
+      initialColorTheme: themeProvider.colorSchemeName,
+    );
+    
       if (selectedTheme != null && mounted) {
-        HapticFeedback.lightImpact();
+      HapticFeedback.lightImpact();
         // 更新新的预设主题到ThemeProvider中
         await _updateThemeProviderWithNewThemes(themeProvider, selectedTheme);
-        // 使用新的方法设置主题，支持自定义颜色
-        await themeProvider.setCurrentColorTheme(selectedTheme);
-        
-        // 显示成功消息
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text('主题已更换为 ${_getThemeDisplayName(selectedTheme, themeProvider)}'),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+      // 使用新的方法设置主题，支持自定义颜色
+      await themeProvider.setCurrentColorTheme(selectedTheme);
+      
+      // 显示成功消息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('主题已更换为 ${_getThemeDisplayName(selectedTheme, themeProvider)}'),
+              ],
             ),
-          );
-        }
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
       }
     } catch (e) {
       debugPrint('Error in color picker: $e');
@@ -763,7 +763,7 @@ class _SettingsScreenState extends State<SettingsScreen>
          // 如果选中的是新增主题，将其添加到gradientSchemes中
      if (newThemes.containsKey(selectedTheme)) {
        ThemeProvider.gradientSchemes[selectedTheme] = newThemes[selectedTheme]!;
-     }
+    }
   }
 
   // 修改：简化主题显示名称方法
